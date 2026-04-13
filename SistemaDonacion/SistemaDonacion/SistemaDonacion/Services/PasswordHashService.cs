@@ -13,7 +13,7 @@ namespace SistemaDonacion.Services
     {
         /// <summary>
         /// Genera un hash seguro de la contraseña usando PBKDF2.
-        /// Formato: "$PBKDF2$iterations$salt$hash"
+        /// Formato:"$PBKDF2$iterations$salt$hash"
         /// </summary>
         public string HashPassword(string password)
         {
