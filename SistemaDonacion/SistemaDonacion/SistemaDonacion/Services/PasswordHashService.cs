@@ -80,7 +80,6 @@ namespace SistemaDonacion.Services
             {
                 diff |= a[i] ^ b[i];
             }
-
             return diff == 0;
         }
     }
