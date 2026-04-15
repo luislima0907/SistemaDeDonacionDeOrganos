@@ -31,17 +31,15 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LoginPath = "/login.html";
     });
 
-// Register password hash service
 builder.Services.AddScoped<IPasswordHashService, PasswordHashService>();
 
 builder.Services.AddControllers();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    // Development: allow HTTP
+    app.UseDeveloperExceptionPage();
 }
 else
 {
@@ -49,6 +47,37 @@ else
     app.UseHsts();
     app.UseHttpsRedirection();
 }
+
+app.MapGet("/admin.html", async context =>
+{
+    if (!context.User.Identity?.IsAuthenticated ?? true)
+    {
+        context.Response.Redirect("/login.html");
+        return;
+    }
+    var role = context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+    if (!role.Equals("Administrador", StringComparison.OrdinalIgnoreCase) &&
+        !role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.Redirect("/login.html");
+        return;
+    }
+    var path = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "admin.html");
+    context.Response.ContentType = "text/html; charset=utf-8";
+    await context.Response.SendFileAsync(path);
+});
+
+app.MapGet("/medico.html", async context =>
+{
+    if (!context.User.Identity?.IsAuthenticated ?? true)
+    {
+        context.Response.Redirect("/login.html");
+        return;
+    }
+    var path = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "medico.html");
+    context.Response.ContentType = "text/html; charset=utf-8";
+    await context.Response.SendFileAsync(path);
+});
 
 // Serve static files
 app.UseStaticFiles();

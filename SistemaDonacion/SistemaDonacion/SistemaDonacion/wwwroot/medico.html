@@ -9,6 +9,10 @@
     .container { max-width: 800px; margin: 0 auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     h1 { color: #333; }
     .message { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
+    .logout-btn {position: fixed; top: 1rem; right: 1rem; padding: .5rem 1.25rem; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: .9rem;
+    font-weight: bold; z-index: 9999;}
+    .logout-btn:hover { background: #b02a37; }
+    .logout-btn:disabled { background: #ccc; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -24,5 +28,93 @@
       <li>Ver asignaciones de órganos</li>
     </ul>
   </div>
+  <button class="logout-btn" id="btnLogout" onclick="cerrarSesion()">Cerrar sesión</button>
+  <script>
+  // Verificar sesión al cargar
+  (async () => {
+    try {
+      const res = await fetch('/api/auth/current', { credentials: 'include' });
+      if (!res.ok) window.location.replace('/login.html');
+    } catch {
+      window.location.replace('/login.html');
+    }
+  })();
+
+  function cerrarSesion() {
+    // Paso 1: mostrar modal de confirmación
+    const overlay = document.createElement('div');
+    overlay.id = 'logoutOverlay';
+    overlay.style.cssText = `
+      position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+      display: flex; align-items: center; justify-content: center; z-index: 9999;
+    `;
+    overlay.innerHTML = `
+      <div style="background: white; border-radius: 8px; padding: 1.5rem 2rem;
+                  max-width: 320px; width: 90%; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+        <p style="font-size: 1.1rem; font-weight: bold; margin: 0 0 0.5rem;">¿Cerrar sesión?</p>
+        <p style="font-size: 0.9rem; color: #666; margin: 0 0 1.25rem;">
+          Tu sesión activa será finalizada de forma segura.
+        </p>
+        <div style="display: flex; gap: 8px;">
+          <button onclick="document.getElementById('logoutOverlay').remove()"
+            style="flex:1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;
+                   background: #f5f5f5; cursor: pointer; font-size: 0.9rem;">
+            Cancelar
+          </button>
+          <button onclick="confirmarLogout()"
+            style="flex:1; padding: 8px; border: 1px solid #c0392b; border-radius: 4px;
+                   background: #e74c3c; color: white; cursor: pointer;
+                   font-size: 0.9rem; font-weight: bold;">
+            Sí, cerrar sesión
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  }
+
+  async function confirmarLogout() {
+    const overlay = document.getElementById('logoutOverlay');
+    // Paso 2: mostrar mensaje de cierre en progreso
+    overlay.innerHTML = `
+      <div style="background: white; border-radius: 8px; padding: 2rem;
+                  text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+        <p style="font-size: 1rem; color: #333; margin: 0;">Cerrando sesión...</p>
+      </div>
+    `;
+
+    try {
+      const res = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (res.ok) {
+        sessionStorage.clear();
+        localStorage.clear();
+
+        // Paso 3: mostrar confirmación de éxito
+        overlay.innerHTML = `
+          <div style="background: white; border-radius: 8px; padding: 2rem;
+                      text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+            <p style="font-size: 1.1rem; font-weight: bold; color: #27ae60; margin: 0 0 0.5rem;">
+              ✓ Sesión cerrada correctamente
+            </p>
+            <p style="font-size: 0.9rem; color: #666; margin: 0;">
+              Redirigiendo al inicio de sesión...
+            </p>
+          </div>
+        `;
+        setTimeout(() => window.location.replace('/login.html'), 1500);
+      } else {
+        overlay.remove();
+        alert('No se pudo cerrar la sesión, intente nuevamente');
+      }
+    } catch {
+      overlay.remove();
+      alert('No se pudo cerrar la sesión, intente nuevamente');
+    }
+  }
+</script>
 </body>
 </html>

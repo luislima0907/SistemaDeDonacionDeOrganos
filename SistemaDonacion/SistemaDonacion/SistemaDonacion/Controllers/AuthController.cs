@@ -82,6 +82,33 @@ namespace SistemaDonacion.Controllers
             }
         }
 
+        [HttpPost("logout")]
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            try
+            {
+                var userName = User.FindFirst(ClaimTypes.Name)?.Value ?? "desconocido";
+
+                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+                Response.Cookies.Delete("SistemaDonacion.Auth", new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict
+                });
+
+                Console.WriteLine($"[LOGOUT] {DateTime.UtcNow:O} | Usuario: {userName} | Sesión cerrada.");
+
+                return Ok(new { message = "Sesión cerrada correctamente" });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { message = "No se pudo cerrar la sesión, intente nuevamente" });
+            }
+        }
+
         [HttpGet("current")]
         public IActionResult GetCurrentUser()
         {
