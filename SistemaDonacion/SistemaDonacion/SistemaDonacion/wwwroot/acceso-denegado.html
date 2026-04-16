@@ -1,0 +1,77 @@
+﻿<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Acceso Denegado - Sistema Donación</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .container { background: white; border-radius: 12px; padding: 3rem; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); text-align: center; }
+    .icon { font-size: 4rem; margin-bottom: 1rem; }
+    h1 { color: #dc3545; font-size: 1.8rem; margin-bottom: 0.5rem; }
+    p { color: #666; font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.6; }
+    .details { background: #f8f9fa; border-left: 4px solid #dc3545; padding: 1rem; margin: 1.5rem 0; text-align: left; border-radius: 4px; font-size: 0.9rem; color: #555; }
+    .details strong { color: #333; }
+    .button-group { display: flex; gap: 1rem; justify-content: center; }
+    a, button { padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; border: none; cursor: pointer; font-size: 0.95rem; font-weight: 500; transition: all 0.3s ease; }
+    .btn-home { background: #667eea; color: white; }
+    .btn-home:hover { background: #5568d3; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+    .btn-logout { background: #dc3545; color: white; }
+    .btn-logout:hover { background: #c82333; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4); }
+    .info-box { background: #e7f3ff; border: 1px solid #b3d9ff; color: #004085; padding: 1rem; border-radius: 6px; margin: 1.5rem 0; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">🔒</div>
+    <h1>Acceso Denegado</h1>
+    <p>No tiene permisos para acceder a esta sección del sistema.</p>
+    
+    <div class="details">
+      <p><strong>Motivo:</strong> Su rol no cuenta con los permisos necesarios para realizar esta acción.</p>
+      <p><strong>Recomendación:</strong> Si cree que esto es un error, contacte al administrador del sistema.</p>
+    </div>
+
+    <div class="info-box">
+      ℹ️ Por seguridad, todos los intentos de acceso denegado son registrados en el sistema.
+    </div>
+
+    <div class="button-group">
+      <button class="btn-home" onclick="irAlPanel()">Ir al Panel</button>
+      <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
+    </div>
+  </div>
+
+  <script>
+    async function irAlPanel() {
+      try {
+        const res = await fetch('/api/auth/current', { credentials: 'include' });
+        if (res.ok) {
+          const user = await res.json();
+          if (user.rol === 'Administrador' || user.rol === 'Admin') {
+            window.location.replace('/admin.html');
+          } else {
+            window.location.replace('/medico.html');
+          }
+        } else {
+          window.location.replace('/login.html');
+        }
+      } catch {
+        window.location.replace('/login.html');
+      }
+    }
+
+    async function cerrarSesion() {
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include'
+        });
+      } catch { }
+      window.location.replace('/login.html');
+    }
+  </script>
+</body>
+</html>
+

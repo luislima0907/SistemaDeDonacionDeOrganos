@@ -29,6 +29,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
         options.SlidingExpiration = true;
         options.LoginPath = "/login.html";
+        options.AccessDeniedPath = "/acceso-denegado.html";
     });
 
 builder.Services.AddScoped<IPasswordHashService, PasswordHashService>();
@@ -48,6 +49,14 @@ else
     app.UseHttpsRedirection();
 }
 
+// Explicit routing
+app.UseRouting();
+
+// Authentication y Authorization ANTES de UseStaticFiles
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Mapear rutas protegidas ANTES de servir archivos estáticos
 app.MapGet("/admin.html", async context =>
 {
     if (!context.User.Identity?.IsAuthenticated ?? true)
@@ -59,7 +68,7 @@ app.MapGet("/admin.html", async context =>
     if (!role.Equals("Administrador", StringComparison.OrdinalIgnoreCase) &&
         !role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
     {
-        context.Response.Redirect("/login.html");
+        context.Response.Redirect("/acceso-denegado.html");
         return;
     }
     var path = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "admin.html");
@@ -74,22 +83,31 @@ app.MapGet("/medico.html", async context =>
         context.Response.Redirect("/login.html");
         return;
     }
+    var role = context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+    if (!role.Equals("Medico", StringComparison.OrdinalIgnoreCase) && 
+        !role.Equals("Administrador", StringComparison.OrdinalIgnoreCase) &&
+        !role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.Redirect("/acceso-denegado.html");
+        return;
+    }
     var path = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "medico.html");
     context.Response.ContentType = "text/html; charset=utf-8";
     await context.Response.SendFileAsync(path);
 });
 
-// Serve static files
-app.UseStaticFiles();
-
-// Explicit routing
-app.UseRouting();
-
-app.UseAuthentication();
-app.UseAuthorization();
+app.MapGet("/acceso-denegado.html", async context =>
+{
+    var path = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "acceso-denegado.html");
+    context.Response.ContentType = "text/html; charset=utf-8";
+    await context.Response.SendFileAsync(path);
+});
 
 // Add Antiforgery middleware
 app.UseAntiforgery();
+
+// Serve static files DESPUÉS de las validaciones
+app.UseStaticFiles();
 
 app.MapControllers();
 
