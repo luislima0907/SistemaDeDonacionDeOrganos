@@ -11,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Add Antiforgery servicesss
+// Add Antiforgery services
 builder.Services.AddAntiforgery();
 
 // Add DbContext (SQL Server) - tabla Usuarios 
