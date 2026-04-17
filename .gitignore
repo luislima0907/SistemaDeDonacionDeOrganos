@@ -1,0 +1,11 @@
+# Visual Studio
+.vs/
+*.user
+
+# Build outputs
+**/bin/
+**/obj/
+
+# Environment
+appsettings.json
+SistemaDeDonacionDeOrganos/
