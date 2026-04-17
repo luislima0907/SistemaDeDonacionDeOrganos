@@ -121,5 +121,13 @@ namespace SistemaDonacion.Controllers
 
             return Ok(new { id = userId, nombre = userName, rol = role });
         }
+
+        [HttpGet("check-session")]
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        public IActionResult CheckSession()
+        {
+            return Ok(new { authenticated = true });
+        }
     }
+
 }

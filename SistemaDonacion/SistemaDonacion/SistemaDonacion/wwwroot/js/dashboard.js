@@ -128,5 +128,63 @@ async function confirmarLogout() {
         </button>
       </div>
     `;
-  }
+
+    }
+    // DETECCIÓN DE INACTIVIDAD 
+
+    const INACTIVIDAD_MS = 30 * 60 * 1000; // 30 minutos
+    let timerInactividad;
+
+    function reiniciarTimer() {
+        clearTimeout(timerInactividad);
+        timerInactividad = setTimeout(mostrarSesionExpirada, INACTIVIDAD_MS);
+    }
+
+    function mostrarSesionExpirada() {
+        const overlayExistente = document.getElementById('sessionExpiredOverlay');
+        if (overlayExistente) overlayExistente.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'sessionExpiredOverlay';
+        overlay.style.cssText = `
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center; z-index: 99999;
+  `;
+
+        overlay.innerHTML = `
+    <div style="background: white; border-radius: 8px; padding: 2rem;
+                max-width: 320px; width: 90%; text-align: center;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+      <p style="font-size: 1.3rem; margin: 0 0 0.5rem;">⏱️</p>
+      <p style="font-size: 1rem; font-weight: bold; color: #333; margin: 0 0 0.5rem;">
+        Su sesión ha expirado por inactividad
+      </p>
+      <p style="font-size: 0.85rem; color: #666; margin: 0 0 1rem;">
+        Será redirigido al login en breve...
+      </p>
+    </div>
+  `;
+
+        document.body.appendChild(overlay);
+
+        setTimeout(() => {
+            window.location.replace('/login.html');
+        }, 1500);
+    }
+
+    async function verificarSesion() {
+        try {
+            const res = await fetch('/api/auth/check-session', { credentials: 'include' });
+            if (!res.ok) mostrarSesionExpirada();
+        } catch {
+            mostrarSesionExpirada();
+        }
+    }
+
+    ['click', 'mousemove', 'keydown', 'scroll', 'touchstart'].forEach(evento => {
+        document.addEventListener(evento, reiniciarTimer, { passive: true });
+    });
+
+    setInterval(verificarSesion, 5 * 60 * 1000);
+    reiniciarTimer();
 }
