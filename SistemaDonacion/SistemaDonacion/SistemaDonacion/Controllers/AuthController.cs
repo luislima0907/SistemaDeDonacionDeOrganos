@@ -27,7 +27,7 @@ namespace SistemaDonacion.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             if (!ModelState.IsValid)
-                return BadRequest(new { message = "Debe completar todos los campos" });
+                return BadRequest(new { message = "Credenciales inválidas" });
 
             try
             {
@@ -35,15 +35,9 @@ namespace SistemaDonacion.Controllers
                 var user = await _dbContext.Usuarios
                     .FirstOrDefaultAsync(u => u.Nombre == request.Username);
 
-                if (user == null)
+                if (user == null || !user.Estado)
                 {
                     return BadRequest(new { message = "Credenciales inválidas" });
-                }
-
-                // Verificar si el usuario está activo
-                if (!user.Estado)
-                {
-                    return Unauthorized(new { message = "Credenciales inválidas" });
                 }
 
                 // Verificar la contraseña usando el servicio de hash
@@ -78,7 +72,16 @@ namespace SistemaDonacion.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Error al intentar iniciar sesión: " + ex.Message });
+                Console.WriteLine($"[ERROR LOGIN] {DateTime.UtcNow:O}");
+                Console.WriteLine($"Exception Type: {ex.GetType().FullName}");
+                Console.WriteLine($"Message: {ex.Message}");
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"InnerException: {ex.InnerException.Message}");
+                    Console.WriteLine($"InnerException StackTrace: {ex.InnerException.StackTrace}");
+                }
+                return StatusCode(500, new { message = "Error al intentar iniciar sesión, intente nuevamente" });
             }
         }
 
