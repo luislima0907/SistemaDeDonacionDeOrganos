@@ -4,6 +4,7 @@ using SistemaDonacion.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using SistemaDonacion.Components;
 using System.IO;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,8 +34,15 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 builder.Services.AddScoped<IPasswordHashService, PasswordHashService>();
+builder.Services.AddScoped<IBitacoraService, BitacoraService>();
 
-builder.Services.AddControllers();
+// Configurar JSON para ignorar referencias circulares
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.WriteIndented = true;
+    });
 
 var app = builder.Build();
 
@@ -92,6 +100,26 @@ app.MapGet("/medico.html", async context =>
         return;
     }
     var path = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "medico.html");
+    context.Response.ContentType = "text/html; charset=utf-8";
+    await context.Response.SendFileAsync(path);
+});
+
+app.MapGet("/donantes.html", async context =>
+{
+    if (!context.User.Identity?.IsAuthenticated ?? true)
+    {
+        context.Response.Redirect("/login.html");
+        return;
+    }
+    var role = context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+    if (!role.Equals("Medico", StringComparison.OrdinalIgnoreCase) && 
+        !role.Equals("Administrador", StringComparison.OrdinalIgnoreCase) &&
+        !role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.Redirect("/acceso-denegado.html");
+        return;
+    }
+    var path = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "donantes.html");
     context.Response.ContentType = "text/html; charset=utf-8";
     await context.Response.SendFileAsync(path);
 });
