@@ -161,6 +161,29 @@ GO
 
 PRINT 'Tabla BitacoraAcciones creada/verificada exitosamente.'
 
+IF OBJECT_ID(N'dbo.Pacientes', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Pacientes (
+        Id INT PRIMARY KEY IDENTITY(1,1),
+        Nombre NVARCHAR(256) NOT NULL,
+        TipoSanguineo NVARCHAR(10) NOT NULL,
+        OrganoRequerido NVARCHAR(100) NOT NULL,
+        NivelUrgencia NVARCHAR(20) NOT NULL,
+        HospitalId INT NOT NULL,
+        Estado NVARCHAR(50) NOT NULL DEFAULT 'Activo',
+        Observaciones NVARCHAR(MAX),
+        FechaRegistro DATETIME NOT NULL DEFAULT GETDATE(),
+        FechaActualizacion DATETIME NOT NULL DEFAULT GETDATE(),
+        FOREIGN KEY (HospitalId) REFERENCES dbo.Hospitales(Id)
+    )
+
+    CREATE INDEX IX_Pacientes_Estado ON dbo.Pacientes (Estado)
+    CREATE INDEX IX_Pacientes_TipoSanguineo ON dbo.Pacientes (TipoSanguineo)
+    CREATE INDEX IX_Pacientes_NivelUrgencia ON dbo.Pacientes (NivelUrgencia)
+END
+GO
+PRINT 'Tabla Pacientes creada/verificada.'
+
 -- Verificar que todas las tablas fueron creadas
 SELECT 'Tablas creadas:' AS Estado
 SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dbo' ORDER BY TABLE_NAME

@@ -14,6 +14,7 @@ namespace SistemaDonacion.Data
         public DbSet<Donante> Donantes { get; set; }
         public DbSet<Organo> Organos { get; set; }
         public DbSet<BitacoraAccion> BitacoraAcciones { get; set; }
+        public DbSet<Paciente> Pacientes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -168,6 +169,28 @@ namespace SistemaDonacion.Data
                 b.HasIndex(ba => ba.UsuarioId);
                 b.HasIndex(ba => ba.Tabla);
                 b.HasIndex(ba => ba.FechaAccion);
+            });
+
+            modelBuilder.Entity<Paciente>(b =>
+            {
+                b.ToTable("Pacientes");
+                b.HasKey(p => p.Id);
+
+                b.Property(p => p.Nombre).IsRequired().HasMaxLength(256);
+                b.Property(p => p.TipoSanguineo).IsRequired().HasMaxLength(10);
+                b.Property(p => p.OrganoRequerido).IsRequired().HasMaxLength(100);
+                b.Property(p => p.NivelUrgencia).IsRequired().HasMaxLength(20);
+                b.Property(p => p.Estado).HasMaxLength(50).HasDefaultValue("Activo");
+                b.Property(p => p.HospitalId).IsRequired();
+
+                b.HasOne(p => p.Hospital)
+                    .WithMany()
+                    .HasForeignKey(p => p.HospitalId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasIndex(p => p.Estado);
+                b.HasIndex(p => p.TipoSanguineo);
+                b.HasIndex(p => p.NivelUrgencia);
             });
         }
     }
