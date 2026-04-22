@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gestión de Pacientes - Sistema Donación</title>
+  <link rel="stylesheet" href="./css/dashboard.css" />
+  <style>
+    /* mismo estilo que donantes.html — copia el bloque <style> de donantes.html aquí */
+    .tabs { display:flex; gap:.5rem; margin-bottom:2rem; border-bottom:2px solid #e0e0e0; }
+    .tab-btn { padding:.75rem 1.5rem; background:none; border:none; border-bottom:3px solid transparent; cursor:pointer; font-size:1rem; font-weight:600; color:#666; }
+    .tab-btn.active { color:#667eea; border-bottom-color:#667eea; }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+    .form-group { margin-bottom:1.5rem; }
+    label { display:block; margin-bottom:.5rem; font-weight:600; color:#333; }
+    input, select, textarea { width:100%; padding:.75rem; border:1px solid #ddd; border-radius:4px; font-size:.95rem; box-sizing:border-box; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    .btn { padding:.75rem 1.5rem; border:none; border-radius:4px; cursor:pointer; font-size:.95rem; font-weight:600; }
+    .btn-primary { background:#667eea; color:white; }
+    .btn-secondary { background:#e0e0e0; color:#333; }
+    .btn:disabled { opacity:.6; cursor:not-allowed; }
+    .alert { padding:1rem; border-radius:4px; margin-bottom:1rem; border-left:4px solid; }
+    .alert-success { background:#d4edda; border-color:#28a745; color:#155724; }
+    .alert-error { background:#f8d7da; border-color:#dc3545; color:#721c24; }
+    .alert-info { background:#d1ecf1; border-color:#17a2b8; color:#0c5460; }
+    table { width:100%; border-collapse:collapse; margin-top:1.5rem; }
+    th { background:#f5f5f5; padding:1rem; text-align:left; font-weight:600; border-bottom:2px solid #ddd; }
+    td { padding:.75rem 1rem; border-bottom:1px solid #ddd; }
+    tr:hover { background:#fafafa; }
+    .badge { display:inline-block; padding:.25rem .75rem; border-radius:12px; font-size:.85rem; font-weight:600; }
+    .badge-activo { background:#d4edda; color:#155724; }
+    .badge-asignado { background:#fff3cd; color:#856404; }
+    .badge-inactivo { background:#e2e3e5; color:#383d41; }
+    .urgencia-alta { color:#dc3545; font-weight:700; }
+    .urgencia-media { color:#fd7e14; font-weight:700; }
+    .urgencia-baja { color:#28a745; font-weight:700; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>👥 Gestión de Pacientes</h1>
+    <div id="message"></div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="mostrarTab('registrar-paciente', event)">Registrar Paciente</button>
+      <button class="tab-btn" onclick="mostrarTab('listar-pacientes', event)">Listar Pacientes</button>
+    </div>
+
+    <!-- Tab: Registrar -->
+    <div id="registrar-paciente" class="tab-content active">
+      <h2>Registrar Nuevo Paciente</h2>
+      <form id="formPaciente" onsubmit="registrarPaciente(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="nombre">Nombre Completo *</label>
+            <input type="text" id="nombre" required />
+          </div>
+          <div class="form-group">
+            <label for="tipoSanguineo">Tipo de Sangre *</label>
+            <select id="tipoSanguineo" required>
+              <option value="">Seleccionar...</option>
+              <option>O+</option><option>O-</option>
+              <option>A+</option><option>A-</option>
+              <option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="organoRequerido">Órgano Requerido *</label>
+            <select id="organoRequerido" required>
+              <option value="">Seleccionar...</option>
+              <option>Corazón</option><option>Pulmón</option>
+              <option>Hígado</option><option>Riñón</option>
+              <option>Páncreas</option><option>Córnea</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="nivelUrgencia">Nivel de Urgencia *</label>
+            <select id="nivelUrgencia" required>
+              <option value="">Seleccionar...</option>
+              <option>Alta</option>
+              <option>Media</option>
+              <option>Baja</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="hospitalId">Hospital *</label>
+          <select id="hospitalId" required>
+            <option value="">Cargando hospitales...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="observaciones">Observaciones</label>
+          <textarea id="observaciones"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Registrar Paciente</button>
+      </form>
+    </div>
+
+    <!-- Tab: Listar -->
+    <div id="listar-pacientes" class="tab-content">
+      <h2>Pacientes Registrados</h2>
+      <button class="btn btn-secondary" onclick="cargarPacientes()">Actualizar</button>
+      <div id="pacientes-container">
+        <p style="text-align:center;color:#999;">Cargando...</p>
+      </div>
+    </div>
+  </div>
+
+  <button class="logout-btn" id="btnLogout" onclick="cerrarSesion()">Cerrar sesión</button>
+
+  <script src="./js/dashboard.js"></script>
+  <script src="./js/pacientes.js"></script>
+</body>
+</html>
