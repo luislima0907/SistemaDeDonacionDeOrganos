@@ -17,6 +17,7 @@ namespace SistemaDonacion.Controllers
         private static readonly string[] TiposSanguineosValidos = { "O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-" };
         private static readonly string[] OrganosValidos = { "Corazón", "Pulmón", "Hígado", "Riñón", "Páncreas", "Córnea" };
         private static readonly string[] NivelesUrgenciaValidos = { "Alta", "Media", "Baja" };
+        private static readonly string[] EstadosValidos = { "Activo", "Trasplantado", "Fallecido" };
 
         public PacienteController(AppDbContext context, IBitacoraService bitacora)
         {
@@ -161,7 +162,7 @@ namespace SistemaDonacion.Controllers
 
         // PUT: api/paciente/{id}/estado
         [HttpPut("{id}/estado")]
-        public async Task<IActionResult> ActualizarEstado(int id, [FromBody] UpdateEstadoRequest request)
+        public async Task<IActionResult> ActualizarEstado(int id, [FromBody] UpdateEstadoPacienteRequest request)
         {
             var paciente = await _context.Pacientes.FindAsync(id);
             if (paciente == null)
@@ -190,6 +191,98 @@ namespace SistemaDonacion.Controllers
 
             return Ok(new { mensaje = "Estado actualizado correctamente", paciente });
         }
+
+        // PUT: api/paciente/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> ActualizarPaciente(int id, [FromBody] UpdatePacienteRequest request)
+        {
+            var paciente = await _context.Pacientes.FindAsync(id);
+            if (paciente == null)
+                return NotFound(new { mensaje = "Paciente no encontrado" });
+
+            var usuarioId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            if (usuarioId == 0)
+                return Unauthorized(new { mensaje = "Usuario no autenticado" });
+
+            // Validar estado si se proporciona
+            if (!string.IsNullOrWhiteSpace(request.Estado))
+            {
+                if (!EstadosValidos.Contains(request.Estado.Trim()))
+                    return BadRequest(new { mensaje = "Estado inválido. Estados permitidos: Activo, Trasplantado, Fallecido" });
+            }
+
+            // Validar nivel de urgencia si se proporciona
+            if (!string.IsNullOrWhiteSpace(request.NivelUrgencia))
+            {
+                if (!NivelesUrgenciaValidos.Contains(request.NivelUrgencia.Trim()))
+                    return BadRequest(new { mensaje = "Nivel de urgencia inválido. Opciones: Alta, Media, Baja" });
+            }
+
+            // Guardar valores anteriores para bitácora
+            var estadoAnterior = paciente.Estado;
+            var urgenciaAnterior = paciente.NivelUrgencia;
+
+            // Actualizar solo estado y nivel de urgencia
+            if (!string.IsNullOrWhiteSpace(request.Estado))
+                paciente.Estado = request.Estado.Trim();
+
+            if (!string.IsNullOrWhiteSpace(request.NivelUrgencia))
+                paciente.NivelUrgencia = request.NivelUrgencia.Trim();
+
+            paciente.FechaActualizacion = DateTime.Now;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+
+                // Registrar en bitácora
+                try
+                {
+                    string cambios = "";
+                    if (estadoAnterior != paciente.Estado)
+                        cambios += $"Estado: {estadoAnterior} → {paciente.Estado}. ";
+                    if (urgenciaAnterior != paciente.NivelUrgencia)
+                        cambios += $"Urgencia: {urgenciaAnterior} → {paciente.NivelUrgencia}.";
+
+                    await _bitacora.RegistrarAccionAsync(
+                        usuarioId,
+                        "Actualizar Paciente",
+                        "Pacientes",
+                        paciente.Id,
+                        $"Estado: {estadoAnterior}, Urgencia: {urgenciaAnterior}",
+                        $"Estado: {paciente.Estado}, Urgencia: {paciente.NivelUrgencia}",
+                        cambios
+                    );
+                }
+                catch { }
+
+                // Retornar paciente actualizado
+                await _context.Entry(paciente).Reference(p => p.Hospital).LoadAsync();
+
+                return Ok(new
+                {
+                    mensaje = "Paciente actualizado correctamente",
+                    paciente = new
+                    {
+                        paciente.Id,
+                        paciente.Nombre,
+                        paciente.TipoSanguineo,
+                        paciente.OrganoRequerido,
+                        paciente.NivelUrgencia,
+                        paciente.Estado,
+                        paciente.HospitalId,
+                        paciente.Observaciones,
+                        paciente.FechaRegistro,
+                        paciente.FechaActualizacion,
+                        Hospital = paciente.Hospital != null ? new { paciente.Hospital.Id, paciente.Hospital.Nombre, paciente.Hospital.Ciudad } : null
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { mensaje = "Error al actualizar el paciente", detalle = ex.Message });
+            }
+        }
     }
 
     public class CreatePacienteRequest
@@ -199,6 +292,18 @@ namespace SistemaDonacion.Controllers
         public string OrganoRequerido { get; set; } = string.Empty;
         public string NivelUrgencia { get; set; } = string.Empty;
         public int HospitalId { get; set; }
+        public string? Observaciones { get; set; }
+    }
+
+    public class UpdatePacienteRequest
+    {
+        public string? Estado { get; set; }
+        public string? NivelUrgencia { get; set; }
+    }
+
+    public partial class UpdateEstadoPacienteRequest
+    {
+        public string NuevoEstado { get; set; } = string.Empty;
         public string? Observaciones { get; set; }
     }
 }

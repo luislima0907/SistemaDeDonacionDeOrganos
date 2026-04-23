@@ -1,4 +1,5 @@
 let pacientesData = [];
+let pacienteEditando = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   cargarHospitalesPacientes();
@@ -107,19 +108,23 @@ function mostrarTablaPacientes() {
         <tr>
           <th>ID</th><th>Nombre</th><th>Tipo Sangre</th>
           <th>Órgano Requerido</th><th>Urgencia</th>
-          <th>Hospital</th><th>Estado</th><th>Fecha</th>
+          <th>Hospital</th><th>Estado</th><th>Acciones</th>
         </tr>
       </thead><tbody>
   `;
 
   pacientesData.forEach(p => {
-    const badge = `<span class="badge badge-${p.estado.toLowerCase()}">${p.estado}</span>`;
+    const badgeClass = `badge-${p.estado.toLowerCase()}`;
+    const badge = `<span class="badge ${badgeClass}">${p.estado}</span>`;
     const urgenciaClass = `urgencia-${p.nivelUrgencia.toLowerCase()}`;
-    const fecha = new Date(p.fechaRegistro).toLocaleDateString('es-ES');
     const hospital = p.hospital ? p.hospital.nombre : `Hospital #${p.hospitalId}`;
+    
+    // Desactivar edición para pacientes trasplantados o fallecidos (visual)
+    const isInactive = p.estado === 'Trasplantado' || p.estado === 'Fallecido';
+    const rowStyle = isInactive ? 'style="opacity:0.6;"' : '';
 
     html += `
-      <tr>
+      <tr ${rowStyle}>
         <td>#${p.id}</td>
         <td>${p.nombre}</td>
         <td><strong>${p.tipoSanguineo}</strong></td>
@@ -127,7 +132,11 @@ function mostrarTablaPacientes() {
         <td><span class="${urgenciaClass}">${p.nivelUrgencia}</span></td>
         <td>${hospital}</td>
         <td>${badge}</td>
-        <td>${fecha}</td>
+        <td>
+          <div class="action-buttons">
+            <button class="btn btn-warning btn-sm" onclick="abrirModalEditar(${p.id})">Editar</button>
+          </div>
+        </td>
       </tr>
     `;
   });
@@ -135,3 +144,68 @@ function mostrarTablaPacientes() {
   html += '</tbody></table>';
   container.innerHTML = html;
 }
+
+function abrirModalEditar(pacienteId) {
+  const paciente = pacientesData.find(p => p.id === pacienteId);
+  if (!paciente) return;
+
+  pacienteEditando = paciente;
+  document.getElementById('modalNombre').textContent = paciente.nombre;
+  document.getElementById('modalEstado').value = paciente.estado;
+  document.getElementById('modalUrgencia').value = paciente.nivelUrgencia;
+
+  document.getElementById('modalEditar').classList.add('active');
+}
+
+function cerrarModal() {
+  document.getElementById('modalEditar').classList.remove('active');
+  pacienteEditando = null;
+}
+
+async function guardarCambios() {
+  if (!pacienteEditando) return;
+
+  const estado = document.getElementById('modalEstado').value.trim();
+  const nivelUrgencia = document.getElementById('modalUrgencia').value.trim();
+
+  if (!estado || !nivelUrgencia) {
+    mostrarMensaje('Debe seleccionar estado y urgencia', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btnGuardar');
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  try {
+    const res = await fetch(`/api/paciente/${pacienteEditando.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ estado, nivelUrgencia })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      mostrarMensaje('✓ Paciente actualizado correctamente', 'success');
+      cerrarModal();
+      cargarPacientes();
+    } else {
+      mostrarMensaje(data.mensaje || 'No se pudo actualizar el paciente, intente nuevamente', 'error');
+    }
+  } catch {
+    mostrarMensaje('No se pudo actualizar el paciente, intente nuevamente', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Guardar';
+  }
+}
+
+// Cerrar modal al hacer click fuera
+document.addEventListener('click', (e) => {
+  const modal = document.getElementById('modalEditar');
+  if (e.target === modal) {
+    cerrarModal();
+  }
+});
