@@ -6,7 +6,6 @@
   <title>Gestión de Pacientes - Sistema Donación</title>
   <link rel="stylesheet" href="./css/dashboard.css" />
   <style>
-    /* mismo estilo que donantes.html — copia el bloque <style> de donantes.html aquí */
     .tabs { display:flex; gap:.5rem; margin-bottom:2rem; border-bottom:2px solid #e0e0e0; }
     .tab-btn { padding:.75rem 1.5rem; background:none; border:none; border-bottom:3px solid transparent; cursor:pointer; font-size:1rem; font-weight:600; color:#666; }
     .tab-btn.active { color:#667eea; border-bottom-color:#667eea; }
@@ -19,7 +18,11 @@
     .btn { padding:.75rem 1.5rem; border:none; border-radius:4px; cursor:pointer; font-size:.95rem; font-weight:600; }
     .btn-primary { background:#667eea; color:white; }
     .btn-secondary { background:#e0e0e0; color:#333; }
+    .btn-success { background:#28a745; color:white; }
+    .btn-warning { background:#fd7e14; color:white; }
+    .btn-danger { background:#dc3545; color:white; }
     .btn:disabled { opacity:.6; cursor:not-allowed; }
+    .btn-sm { padding:.5rem 1rem; font-size:.85rem; }
     .alert { padding:1rem; border-radius:4px; margin-bottom:1rem; border-left:4px solid; }
     .alert-success { background:#d4edda; border-color:#28a745; color:#155724; }
     .alert-error { background:#f8d7da; border-color:#dc3545; color:#721c24; }
@@ -30,11 +33,22 @@
     tr:hover { background:#fafafa; }
     .badge { display:inline-block; padding:.25rem .75rem; border-radius:12px; font-size:.85rem; font-weight:600; }
     .badge-activo { background:#d4edda; color:#155724; }
-    .badge-asignado { background:#fff3cd; color:#856404; }
-    .badge-inactivo { background:#e2e3e5; color:#383d41; }
+    .badge-trasplantado { background:#e2e3e5; color:#383d41; }
+    .badge-fallecido { background:#f8d7da; color:#721c24; }
     .urgencia-alta { color:#dc3545; font-weight:700; }
     .urgencia-media { color:#fd7e14; font-weight:700; }
     .urgencia-baja { color:#28a745; font-weight:700; }
+    .action-buttons { display:flex; gap:.5rem; }
+    
+    /* Modal */
+    .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; }
+    .modal.active { display:flex; }
+    .modal-content { background:white; padding:2rem; border-radius:8px; min-width:400px; box-shadow:0 4px 20px rgba(0,0,0,0.2); }
+    .modal-header { margin-bottom:1.5rem; }
+    .modal-header h2 { margin:0; }
+    .modal-body { margin-bottom:1.5rem; }
+    .modal-footer { display:flex; gap:1rem; justify-content:flex-end; }
+    .close-btn { background:none; border:none; font-size:1.5rem; cursor:pointer; float:right; }
   </style>
 </head>
 <body>
@@ -107,6 +121,43 @@
       <button class="btn btn-secondary" onclick="cargarPacientes()">Actualizar</button>
       <div id="pacientes-container">
         <p style="text-align:center;color:#999;">Cargando...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para editar -->
+  <div id="modalEditar" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button class="close-btn" onclick="cerrarModal()">&times;</button>
+        <h2>Actualizar Paciente</h2>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nombre: <strong id="modalNombre"></strong></label>
+        </div>
+        <div class="form-group">
+          <label for="modalEstado">Estado *</label>
+          <select id="modalEstado" required>
+            <option value="">Seleccionar...</option>
+            <option>Activo</option>
+            <option>Trasplantado</option>
+            <option>Fallecido</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="modalUrgencia">Nivel de Urgencia *</label>
+          <select id="modalUrgencia" required>
+            <option value="">Seleccionar...</option>
+            <option>Alta</option>
+            <option>Media</option>
+            <option>Baja</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+        <button class="btn btn-primary" id="btnGuardar" onclick="guardarCambios()">Guardar</button>
       </div>
     </div>
   </div>
