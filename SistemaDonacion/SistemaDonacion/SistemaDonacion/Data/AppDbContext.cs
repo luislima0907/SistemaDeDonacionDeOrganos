@@ -39,7 +39,16 @@ namespace SistemaDonacion.Data
                     .HasMaxLength(50)
                     .HasDefaultValue("Medico");
 
+                // Relación con Hospital - nullable pque un usuario podría no estar asociado a un hospital
+                b.Property(u => u.HospitalId).IsRequired(false);
+                b.HasOne(u => u.Hospital)
+                    .WithMany()
+                    .HasForeignKey(u => u.HospitalId)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.Restrict);
+
                 b.HasIndex(u => u.Nombre).IsUnique();
+                b.HasIndex(u => u.HospitalId);
             });
 
             modelBuilder.Entity<Hospital>(b =>
@@ -191,6 +200,7 @@ namespace SistemaDonacion.Data
                 b.HasIndex(p => p.Estado);
                 b.HasIndex(p => p.TipoSanguineo);
                 b.HasIndex(p => p.NivelUrgencia);
+                b.HasIndex(p => p.HospitalId); //Indice para filtrar por hospital
             });
         }
     }

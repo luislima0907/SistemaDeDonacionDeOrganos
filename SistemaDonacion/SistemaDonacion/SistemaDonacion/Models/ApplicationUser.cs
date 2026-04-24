@@ -17,5 +17,9 @@ namespace SistemaDonacion.Models
 
         [MaxLength(50)]
         public string Rol { get; set; } = "Medico";
+
+
+        public int? HospitalId { get; set; }
+        public Hospital? Hospital { get; set; }
     }
 }

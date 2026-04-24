@@ -25,13 +25,61 @@ namespace SistemaDonacion.Controllers
             _bitacora = bitacora;
         }
 
+        // Método para obtener el HospitalId del usuario autenticado
+        private int? ObtenerHospitalIdDelUsuario()
+        {
+            var valor = User.FindFirst("HospitalId")?.Value;
+            if (int.TryParse(valor, out var id) && id > 0)
+                return id;
+            return null;
+        }
+
+        //Registrar en bitácora si alguien intenta ver pacientes de otro hospital
+        private async Task RegistrarAccesoCruzadoAsync(int usuarioId, int pacienteId, int hospitalMedico, int hospitalPaciente)
+        {
+            try
+            {
+                await _bitacora.RegistrarAccionAsync(
+                    usuarioId,
+                    "ACCESO_DENEGADO_HOSPITAL_CRUZADO",
+                    "Pacientes",
+                    pacienteId,
+                    $"HospitalId del médico: {hospitalMedico}",
+                    $"HospitalId del paciente: {hospitalPaciente}",
+                    $"Intento de acceso cruzado entre hospitales detectado y bloqueado."
+                );
+            }
+            catch { }
+        }
+
         // GET: api/paciente
+        //Solo devuelve pacientes del mismo hospital que el usuario
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetPacientes()
         {
-            var pacientes = await _context.Pacientes
-                .Include(p => p.Hospital)
-                .ToListAsync();
+            var rol = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+
+            // RF-10: Admin ve todos, médico solo ve los de su hospital
+            IQueryable<Paciente> query = _context.Pacientes.Include(p => p.Hospital);
+
+            if (!rol.Equals("Administrador", StringComparison.OrdinalIgnoreCase) &&
+                !rol.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+            {
+                var hospitalId = ObtenerHospitalIdDelUsuario();
+                if (hospitalId == null)
+                    return Unauthorized(new { mensaje = "No tiene un hospital asignado. Contacte al administrador." });
+
+                query = query.Where(p => p.HospitalId == hospitalId.Value);
+            }
+
+            var pacientes = await query.ToListAsync();
+
+            if (!pacientes.Any())
+                return Ok(new
+                {
+                    mensaje = "No hay pacientes registrados en su hospital",
+                    datos = Array.Empty<object>()
+                });
 
             var resultado = pacientes.Select(p => new
             {
@@ -52,15 +100,28 @@ namespace SistemaDonacion.Controllers
         }
 
         // GET: api/paciente/{id}
+        //Valida que el paciente sea del mismo hospital que el usuario.
         [HttpGet("{id}")]
         public async Task<ActionResult<object>> GetPaciente(int id)
         {
+            var hospitalId = ObtenerHospitalIdDelUsuario();
+            if (hospitalId == null)
+                return Unauthorized(new { mensaje = "No tiene un hospital asignado. Contacte al administrador." });
+
+            var usuarioId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
             var paciente = await _context.Pacientes
                 .Include(p => p.Hospital)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (paciente == null)
                 return NotFound(new { mensaje = "Paciente no encontrado" });
+
+            if (paciente.HospitalId != hospitalId.Value)
+            {
+                await RegistrarAccesoCruzadoAsync(usuarioId, paciente.Id, hospitalId.Value, paciente.HospitalId);
+                return StatusCode(403, new { mensaje = "No tiene permisos para acceder a este paciente" });
+            }
 
             return Ok(new
             {
@@ -89,27 +150,33 @@ namespace SistemaDonacion.Controllers
             if (usuarioId == 0)
                 return Unauthorized(new { mensaje = "Usuario no autenticado" });
 
-            // Validar campos obligatorios
+            var hospitalId = ObtenerHospitalIdDelUsuario();
+            if (hospitalId == null)
+                return Unauthorized(new { mensaje = "No tiene un hospital asignado. Contacte al administrador." });
+
             if (string.IsNullOrWhiteSpace(request.Nombre) ||
                 string.IsNullOrWhiteSpace(request.TipoSanguineo) ||
                 string.IsNullOrWhiteSpace(request.OrganoRequerido) ||
                 string.IsNullOrWhiteSpace(request.NivelUrgencia))
                 return BadRequest(new { mensaje = "Todos los campos son obligatorios" });
 
-            // Validar tipo sanguíneo
             if (!TiposSanguineosValidos.Contains(request.TipoSanguineo.ToUpper().Trim()))
                 return BadRequest(new { mensaje = "Tipo sanguíneo inválido" });
 
-            // Validar órgano requerido
             if (!OrganosValidos.Contains(request.OrganoRequerido.Trim()))
                 return BadRequest(new { mensaje = "Órgano requerido inválido" });
 
-            // Validar nivel de urgencia
             if (!NivelesUrgenciaValidos.Contains(request.NivelUrgencia.Trim()))
                 return BadRequest(new { mensaje = "Nivel de urgencia inválido" });
 
-            // Validar hospital
-            var hospitalExiste = await _context.Hospitales.AnyAsync(h => h.Id == request.HospitalId && h.Estado);
+            if (request.HospitalId != 0 && request.HospitalId != hospitalId.Value)
+            {
+                await RegistrarAccesoCruzadoAsync(usuarioId, 0, hospitalId.Value, request.HospitalId);
+                return StatusCode(403, new { mensaje = "No tiene permisos para registrar pacientes en otro hospital" });
+            }
+
+            var hospitalExiste = await _context.Hospitales
+                .AnyAsync(h => h.Id == hospitalId.Value && h.Estado);
             if (!hospitalExiste)
                 return BadRequest(new { mensaje = "Hospital inválido o inactivo" });
 
@@ -119,7 +186,7 @@ namespace SistemaDonacion.Controllers
                 TipoSanguineo = request.TipoSanguineo.ToUpper().Trim(),
                 OrganoRequerido = request.OrganoRequerido.Trim(),
                 NivelUrgencia = request.NivelUrgencia.Trim(),
-                HospitalId = request.HospitalId,
+                HospitalId = hospitalId.Value,
                 Estado = "Activo",
                 Observaciones = request.Observaciones?.Trim(),
                 FechaRegistro = DateTime.Now,
@@ -164,9 +231,21 @@ namespace SistemaDonacion.Controllers
         [HttpPut("{id}/estado")]
         public async Task<IActionResult> ActualizarEstado(int id, [FromBody] UpdateEstadoPacienteRequest request)
         {
+            var hospitalId = ObtenerHospitalIdDelUsuario();
+            if (hospitalId == null)
+                return Unauthorized(new { mensaje = "No tiene un hospital asignado. Contacte al administrador." });
+
+            var usuarioId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
             var paciente = await _context.Pacientes.FindAsync(id);
             if (paciente == null)
                 return NotFound(new { mensaje = "Paciente no encontrado" });
+
+            if (paciente.HospitalId != hospitalId.Value)
+            {
+                await RegistrarAccesoCruzadoAsync(usuarioId, paciente.Id, hospitalId.Value, paciente.HospitalId);
+                return StatusCode(403, new { mensaje = "No tiene permisos para acceder a este paciente" });
+            }
 
             var estadosValidos = new[] { "Activo", "Asignado", "Inactivo" };
             if (!estadosValidos.Contains(request.NuevoEstado))
@@ -175,10 +254,8 @@ namespace SistemaDonacion.Controllers
             var estadoAnterior = paciente.Estado;
             paciente.Estado = request.NuevoEstado;
             paciente.FechaActualizacion = DateTime.Now;
-
             await _context.SaveChangesAsync();
 
-            var usuarioId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             try
             {
                 await _bitacora.RegistrarAccionAsync(
@@ -196,33 +273,33 @@ namespace SistemaDonacion.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> ActualizarPaciente(int id, [FromBody] UpdatePacienteRequest request)
         {
-            var paciente = await _context.Pacientes.FindAsync(id);
-            if (paciente == null)
-                return NotFound(new { mensaje = "Paciente no encontrado" });
+            var hospitalId = ObtenerHospitalIdDelUsuario();
+            if (hospitalId == null)
+                return Unauthorized(new { mensaje = "No tiene un hospital asignado. Contacte al administrador." });
 
             var usuarioId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             if (usuarioId == 0)
                 return Unauthorized(new { mensaje = "Usuario no autenticado" });
 
-            // Validar estado si se proporciona
-            if (!string.IsNullOrWhiteSpace(request.Estado))
+            var paciente = await _context.Pacientes.FindAsync(id);
+            if (paciente == null)
+                return NotFound(new { mensaje = "Paciente no encontrado" });
+
+            if (paciente.HospitalId != hospitalId.Value)
             {
-                if (!EstadosValidos.Contains(request.Estado.Trim()))
-                    return BadRequest(new { mensaje = "Estado inválido. Estados permitidos: Activo, Trasplantado, Fallecido" });
+                await RegistrarAccesoCruzadoAsync(usuarioId, paciente.Id, hospitalId.Value, paciente.HospitalId);
+                return StatusCode(403, new { mensaje = "No tiene permisos para acceder a este paciente" });
             }
 
-            // Validar nivel de urgencia si se proporciona
-            if (!string.IsNullOrWhiteSpace(request.NivelUrgencia))
-            {
-                if (!NivelesUrgenciaValidos.Contains(request.NivelUrgencia.Trim()))
-                    return BadRequest(new { mensaje = "Nivel de urgencia inválido. Opciones: Alta, Media, Baja" });
-            }
+            if (!string.IsNullOrWhiteSpace(request.Estado) && !EstadosValidos.Contains(request.Estado.Trim()))
+                return BadRequest(new { mensaje = "Estado inválido. Estados permitidos: Activo, Trasplantado, Fallecido" });
 
-            // Guardar valores anteriores para bitácora
+            if (!string.IsNullOrWhiteSpace(request.NivelUrgencia) && !NivelesUrgenciaValidos.Contains(request.NivelUrgencia.Trim()))
+                return BadRequest(new { mensaje = "Nivel de urgencia inválido. Opciones: Alta, Media, Baja" });
+
             var estadoAnterior = paciente.Estado;
             var urgenciaAnterior = paciente.NivelUrgencia;
 
-            // Actualizar solo estado y nivel de urgencia
             if (!string.IsNullOrWhiteSpace(request.Estado))
                 paciente.Estado = request.Estado.Trim();
 
@@ -235,28 +312,22 @@ namespace SistemaDonacion.Controllers
             {
                 await _context.SaveChangesAsync();
 
-                // Registrar en bitácora
                 try
                 {
-                    string cambios = "";
+                    var cambios = "";
                     if (estadoAnterior != paciente.Estado)
                         cambios += $"Estado: {estadoAnterior} → {paciente.Estado}. ";
                     if (urgenciaAnterior != paciente.NivelUrgencia)
                         cambios += $"Urgencia: {urgenciaAnterior} → {paciente.NivelUrgencia}.";
 
                     await _bitacora.RegistrarAccionAsync(
-                        usuarioId,
-                        "Actualizar Paciente",
-                        "Pacientes",
-                        paciente.Id,
+                        usuarioId, "Actualizar Paciente", "Pacientes", paciente.Id,
                         $"Estado: {estadoAnterior}, Urgencia: {urgenciaAnterior}",
-                        $"Estado: {paciente.Estado}, Urgencia: {paciente.NivelUrgencia}",
-                        cambios
+                        $"Estado: {paciente.Estado}, Urgencia: {paciente.NivelUrgencia}", cambios
                     );
                 }
                 catch { }
 
-                // Retornar paciente actualizado
                 await _context.Entry(paciente).Reference(p => p.Hospital).LoadAsync();
 
                 return Ok(new

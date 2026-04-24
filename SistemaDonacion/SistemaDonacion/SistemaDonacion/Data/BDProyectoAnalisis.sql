@@ -189,3 +189,90 @@ SELECT 'Tablas creadas:' AS Estado
 SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dbo' ORDER BY TABLE_NAME
 
 select * from Usuarios
+
+
+
+-- Agregar columna HospitalId a Usuarios (nullable para no romper registros existentes)
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'Usuarios' AND COLUMN_NAME = 'HospitalId'
+)
+BEGIN
+    ALTER TABLE dbo.Usuarios
+    ADD HospitalId INT NULL
+        CONSTRAINT FK_Usuarios_Hospitales
+        FOREIGN KEY REFERENCES dbo.Hospitales(Id);
+
+    CREATE INDEX IX_Usuarios_HospitalId ON dbo.Usuarios (HospitalId);
+
+    PRINT 'Columna HospitalId agregada a Usuarios.'
+END
+ELSE
+BEGIN
+    PRINT 'Columna HospitalId ya existe en Usuarios.'
+END
+GO
+
+-- Asignar hospitales a los usuarios existentes
+--    admin sin hospital (Administrador gestiona todos)
+--    medico1 Hospital Central (Id = 1)
+UPDATE dbo.Usuarios
+SET HospitalId = NULL
+WHERE Nombre = 'admin';
+
+UPDATE dbo.Usuarios
+SET HospitalId = 1
+WHERE Nombre = 'medico1';
+
+PRINT 'HospitalId asignado a usuarios existentes.'
+GO
+
+-- Crear usuario médico de prueba para el segundo hospital
+IF NOT EXISTS (SELECT 1 FROM dbo.Usuarios WHERE Nombre = 'medico2')
+BEGIN
+    -- Hash PBKDF2 para "Medico123!" (reutilizando el mismo hash de medico1 para pruebas)
+    INSERT INTO dbo.Usuarios (Nombre, Contrasenia, Estado, Rol, HospitalId)
+    VALUES (
+        'medico2',
+        '$PBKDF2$10000$PBPYvv07oE+ZTjggclVYmA==$nzOtI1jl67AjxOGYaRjweYFxLX6slRPP1zBRc60kw8A=',
+        1,
+        'Medico',
+        2  -- Hospital Nicolasa Cruz
+    );
+    PRINT 'Usuario medico2 creado para Hospital Nicolasa Cruz (Id=2).'
+END
+GO
+
+-- Insertar pacientes de prueba por hospital para validar el filtrado
+IF NOT EXISTS (SELECT 1 FROM dbo.Pacientes WHERE Nombre = 'Paciente Hospital Central 1')
+BEGIN
+    INSERT INTO dbo.Pacientes (Nombre, TipoSanguineo, OrganoRequerido, NivelUrgencia, HospitalId, Estado)
+    VALUES
+        ('Carlos Andrés Pérez', 'O+',  'Riñón',    'Alta',  1, 'Activo'),
+        ('Cristina Nicoll Chaj', 'A-',  'Hígado',   'Media', 1, 'Activo'),
+        ('Juan Pablo Méndez',    'B+',  'Corazón',  'Alta',  2, 'Activo'),
+        ('Ana Lucía Ramírez',    'AB+', 'Pulmón',   'Baja',  2, 'Activo');
+    PRINT 'Pacientes de prueba insertados por hospital.'
+END
+GO
+
+--  Verificación final
+SELECT
+    u.Nombre AS Usuario,
+    u.Rol,
+    h.Nombre AS Hospital,
+    u.HospitalId
+FROM dbo.Usuarios u
+LEFT JOIN dbo.Hospitales h ON u.HospitalId = h.Id
+ORDER BY u.Id;
+
+SELECT
+    p.Nombre AS Paciente,
+    p.HospitalId,
+    h.Nombre AS Hospital
+FROM dbo.Pacientes p
+JOIN dbo.Hospitales h ON p.HospitalId = h.Id
+ORDER BY p.HospitalId, p.Id;
+
+
+
