@@ -51,7 +51,10 @@ namespace SistemaDonacion.Controllers
                 {
                     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                     new Claim(ClaimTypes.Name, user.Nombre),
-                    new Claim(ClaimTypes.Role, user.Rol)
+                    new Claim(ClaimTypes.Role, user.Rol),
+                    new Claim("HospitalId", user.HospitalId.HasValue
+                        ? user.HospitalId.Value.ToString()
+                        : "0")
                 };
 
                 var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -68,7 +71,7 @@ namespace SistemaDonacion.Controllers
                     new ClaimsPrincipal(claimsIdentity),
                     authProperties);
 
-                return Ok(new { message = "OK", role = user.Rol, nombre = user.Nombre });
+                return Ok(new { message = "OK", role = user.Rol, nombre = user.Nombre, hospitalId = user.HospitalId });
             }
             catch (Exception ex)
             {
@@ -121,8 +124,8 @@ namespace SistemaDonacion.Controllers
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var userName = User.FindFirst(ClaimTypes.Name)?.Value;
             var role = User.FindFirst(ClaimTypes.Role)?.Value;
-
-            return Ok(new { id = userId, nombre = userName, rol = role });
+            var hospitalId = User.FindFirst("HospitalId")?.Value;
+            return Ok(new { id = userId, nombre = userName, rol = role, hospitalId = hospitalId });
         }
 
         [HttpGet("check-session")]
