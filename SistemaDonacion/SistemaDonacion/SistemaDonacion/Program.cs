@@ -35,6 +35,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 builder.Services.AddScoped<IPasswordHashService, PasswordHashService>();
 builder.Services.AddScoped<IBitacoraService, BitacoraService>();
+builder.Services.AddScoped<IRankingService, RankingService>();
 
 // Configurar JSON para ignorar referencias circulares
 builder.Services.AddControllers()
@@ -127,6 +128,45 @@ app.MapGet("/donantes.html", async context =>
 app.MapGet("/acceso-denegado.html", async context =>
 {
     var path = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "acceso-denegado.html");
+    context.Response.ContentType = "text/html; charset=utf-8";
+    await context.Response.SendFileAsync(path);
+});
+
+app.MapGet("/pacientes.html", async context =>
+{
+    if (!context.User.Identity?.IsAuthenticated ?? true)
+    {
+        context.Response.Redirect("/login.html");
+        return;
+    }
+    var role = context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+    if (!role.Equals("Medico", StringComparison.OrdinalIgnoreCase) && 
+        !role.Equals("Administrador", StringComparison.OrdinalIgnoreCase) &&
+        !role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.Redirect("/acceso-denegado.html");
+        return;
+    }
+    var path = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "pacientes.html");
+    context.Response.ContentType = "text/html; charset=utf-8";
+    await context.Response.SendFileAsync(path);
+});
+
+app.MapGet("/ranking.html", async context =>
+{
+    if (!context.User.Identity?.IsAuthenticated ?? true)
+    {
+        context.Response.Redirect("/login.html");
+        return;
+    }
+    var role = context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+    if (!role.Equals("Administrador", StringComparison.OrdinalIgnoreCase) &&
+        !role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.Redirect("/acceso-denegado.html");
+        return;
+    }
+    var path = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "ranking.html");
     context.Response.ContentType = "text/html; charset=utf-8";
     await context.Response.SendFileAsync(path);
 });

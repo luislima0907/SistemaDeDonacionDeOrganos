@@ -1,0 +1,375 @@
+﻿<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ranking de Prioridad - Sistema Donación</title>
+  <link rel="stylesheet" href="./css/dashboard.css" />
+  <style>
+    .tabs { display:flex; gap:.5rem; margin-bottom:2rem; border-bottom:2px solid #e0e0e0; }
+    .tab-btn { padding:.75rem 1.5rem; background:none; border:none; border-bottom:3px solid transparent; cursor:pointer; font-size:1rem; font-weight:600; color:#666; }
+    .tab-btn.active { color:#667eea; border-bottom-color:#667eea; }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+    .form-group { margin-bottom:1.5rem; }
+    label { display:block; margin-bottom:.5rem; font-weight:600; color:#333; }
+    input, select, textarea { width:100%; padding:.75rem; border:1px solid #ddd; border-radius:4px; font-size:.95rem; box-sizing:border-box; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    .btn { padding:.75rem 1.5rem; border:none; border-radius:4px; cursor:pointer; font-size:.95rem; font-weight:600; }
+    .btn-primary { background:#667eea; color:white; }
+    .btn-secondary { background:#e0e0e0; color:#333; }
+    .btn-success { background:#28a745; color:white; }
+    .btn-warning { background:#fd7e14; color:white; }
+    .btn-danger { background:#dc3545; color:white; }
+    .btn:disabled { opacity:.6; cursor:not-allowed; }
+    .btn-sm { padding:.5rem 1rem; font-size:.85rem; }
+    .alert { padding:1rem; border-radius:4px; margin-bottom:1rem; border-left:4px solid; }
+    .alert-success { background:#d4edda; border-color:#28a745; color:#155724; }
+    .alert-error { background:#f8d7da; border-color:#dc3545; color:#721c24; }
+    .alert-info { background:#d1ecf1; border-color:#17a2b8; color:#0c5460; }
+    .alert-warning { background:#fff3cd; border-color:#ffc107; color:#856404; }
+    table { width:100%; border-collapse:collapse; margin-top:1.5rem; }
+    th { background:#f5f5f5; padding:1rem; text-align:left; font-weight:600; border-bottom:2px solid #ddd; }
+    td { padding:.75rem 1rem; border-bottom:1px solid #ddd; }
+    tr:hover { background:#fafafa; }
+    .badge { display:inline-block; padding:.25rem .75rem; border-radius:12px; font-size:.85rem; font-weight:600; }
+    .badge-activo { background:#d4edda; color:#155724; }
+    .urgencia-alta { background:#dc3545; color:white; padding:4px 10px; border-radius:12px; font-weight:bold; display:inline-block; }
+    .urgencia-media { background:#fd7e14; color:white; padding:4px 10px; border-radius:12px; font-weight:bold; display:inline-block; }
+    .urgencia-baja { background:#28a745; color:white; padding:4px 10px; border-radius:12px; font-weight:bold; display:inline-block; }
+    .posicion-badge { background:#667eea; color:white; padding:6px 12px; border-radius:50%; font-weight:bold; text-align:center; min-width:40px; }
+    .puntaje-badge { background:#17a2b8; color:white; padding:6px 12px; border-radius:4px; font-weight:bold; }
+    .action-buttons { display:flex; gap:.5rem; }
+    .ranking-info { background:#f0f4ff; border:1px solid #667eea; border-radius:8px; padding:1.5rem; margin-bottom:1.5rem; }
+    .ranking-info h3 { margin:0 0 1rem 0; color:#667eea; }
+    .ranking-stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; }
+    .stat-card { background:white; padding:1rem; border-radius:4px; border-left:4px solid #667eea; }
+    .stat-card strong { display:block; margin-bottom:.5rem; }
+    .stat-value { font-size:1.5rem; font-weight:bold; color:#667eea; }
+    
+    /* Modal */
+    .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; }
+    .modal.active { display:flex; }
+    .modal-content { background:white; padding:2rem; border-radius:8px; min-width:400px; box-shadow:0 4px 20px rgba(0,0,0,0.2); max-height:80vh; overflow-y:auto; }
+    .modal-header { margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; }
+    .modal-header h2 { margin:0; }
+    .modal-body { margin-bottom:1.5rem; }
+    .modal-footer { display:flex; gap:1rem; justify-content:flex-end; }
+    .close-btn { background:none; border:none; font-size:1.5rem; cursor:pointer; }
+    
+    .loading { text-align:center; padding:2rem; }
+    .spinner { display:inline-block; width:40px; height:40px; border:4px solid #f3f3f3; border-top:4px solid #667eea; border-radius:50%; animation:spin 1s linear infinite; }
+    @keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 Ranking de Prioridad de Receptores</h1>
+    <div id="message"></div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="mostrarTab('consultar-ranking', event)">Consultar Ranking</button>
+      <button class="tab-btn" onclick="mostrarTab('ranking-por-tipo', event)">Ranking por Tipo</button>
+    </div>
+
+    <!-- Tab: Consultar Ranking por Órgano -->
+    <div id="consultar-ranking" class="tab-content active">
+      <h2>Consultar Ranking de un Órgano</h2>
+      <div class="form-row" style="margin-bottom:1.5rem;">
+        <div class="form-group">
+          <label for="organoId">Seleccionar Órgano Disponible *</label>
+          <select id="organoId" required onchange="cargarRankingPorOrgano()">
+            <option value="">Cargando órganos...</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="cargarRankingPorOrgano()">Cargar Ranking</button>
+
+      <div id="rankingOrganoContainer" style="margin-top:2rem;"></div>
+    </div>
+
+    <!-- Tab: Ranking por Tipo de Órgano -->
+    <div id="ranking-por-tipo" class="tab-content">
+      <h2>Consultar Ranking por Tipo de Órgano</h2>
+      <div class="form-row" style="margin-bottom:1.5rem;">
+        <div class="form-group">
+          <label for="tipoOrganoSelect">Tipo de Órgano *</label>
+          <select id="tipoOrganoSelect" required>
+            <option value="">Seleccionar...</option>
+            <option>Corazón</option>
+            <option>Pulmón</option>
+            <option>Hígado</option>
+            <option>Riñón</option>
+            <option>Páncreas</option>
+            <option>Córnea</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="tipoSanguineoSelect">Tipo de Sangre del Donante *</label>
+          <select id="tipoSanguineoSelect" required>
+            <option value="">Seleccionar...</option>
+            <option>O+</option><option>O-</option>
+            <option>A+</option><option>A-</option>
+            <option>B+</option><option>B-</option>
+            <option>AB+</option><option>AB-</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="cargarRankingPorTipo()">Cargar Ranking</button>
+
+      <div id="rankingTipoContainer" style="margin-top:2rem;"></div>
+    </div>
+  </div>
+
+  <!-- Modal para asignar órgano -->
+  <div id="modalAsignar" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Información del Paciente</h2>
+        <button class="close-btn" onclick="cerrarModalAsignar()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Detalles del Paciente Seleccionado</label>
+          <div id="pacienteInfo" style="padding:1rem; background:#f5f5f5; border-radius:4px; line-height:1.8;"></div>
+        </div>
+        <div class="alert alert-info" style="margin-top:1.5rem;">
+          <strong>⏳ Próximamente</strong><br>
+          La funcionalidad de asignación de órganos estará disponible en la próxima versión del sistema. Esta opción está siendo desarrollada por otro miembro del equipo.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="cerrarModalAsignar()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const apiBase = '/api';
+    let rankingActual = [];
+    let organoSeleccionado = null;
+    let pacienteSeleccionadoParaAsignar = null;
+
+    // Tabs
+    function mostrarTab(tabId, event) {
+      event.preventDefault();
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // Cargar órganos disponibles
+    async function cargarOrganosDisponibles() {
+      try {
+        const response = await fetch(`${apiBase}/organo`);
+        if (!response.ok) throw new Error('Error al cargar órganos');
+        
+        const organos = await response.json();
+        const disponibles = organos.filter(o => o.estado === 'Disponible');
+        
+        const select = document.getElementById('organoId');
+        select.innerHTML = '<option value="">Seleccionar órgano...</option>';
+        
+        disponibles.forEach(organo => {
+          const option = document.createElement('option');
+          option.value = organo.id;
+          option.textContent = `${organo.tipoOrgano} - ${organo.donante?.nombre || 'Sin info'} (${organo.donante?.tipoSanguineo})`;
+          select.appendChild(option);
+        });
+      } catch (error) {
+        mostrarMensaje(`Error: ${error.message}`, 'error');
+      }
+    }
+
+    // Cargar ranking por órgano específico
+    async function cargarRankingPorOrgano() {
+      const organoId = document.getElementById('organoId').value;
+      if (!organoId) {
+        mostrarMensaje('Seleccione un órgano', 'warning');
+        return;
+      }
+
+      mostrarCarga('rankingOrganoContainer');
+      try {
+        const response = await fetch(`${apiBase}/organo/${organoId}/ranking`);
+        if (!response.ok) throw new Error('Error al cargar ranking');
+        
+        const ranking = await response.json();
+        organoSeleccionado = organoId;
+        rankingActual = ranking;
+        mostrarRanking(ranking, 'rankingOrganoContainer', true);
+      } catch (error) {
+        mostrarMensaje(`Error: ${error.message}`, 'error');
+        document.getElementById('rankingOrganoContainer').innerHTML = '';
+      }
+    }
+
+    // Cargar ranking por tipo de órgano
+    async function cargarRankingPorTipo() {
+      const tipoOrgano = document.getElementById('tipoOrganoSelect').value;
+      const tipoSanguineo = document.getElementById('tipoSanguineoSelect').value;
+      
+      if (!tipoOrgano || !tipoSanguineo) {
+        mostrarMensaje('Complete todos los campos', 'warning');
+        return;
+      }
+
+      mostrarCarga('rankingTipoContainer');
+      try {
+        const response = await fetch(`${apiBase}/organo/ranking-tipo/${tipoOrgano}/${tipoSanguineo}`);
+        if (!response.ok) throw new Error('Error al cargar ranking');
+        
+        const data = await response.json();
+        rankingActual = Array.isArray(data) ? data : (data.datos || []);
+        organoSeleccionado = null;
+        mostrarRanking(rankingActual, 'rankingTipoContainer', false);
+      } catch (error) {
+        mostrarMensaje(`Error: ${error.message}`, 'error');
+        document.getElementById('rankingTipoContainer').innerHTML = '';
+      }
+    }
+
+    // Mostrar ranking en tabla
+    function mostrarRanking(ranking, containerId, mostrarBotonAsignar) {
+      const container = document.getElementById(containerId);
+      
+      if (!ranking || ranking.length === 0) {
+        container.innerHTML = '<div class="alert alert-info">No hay pacientes compatibles disponibles para este órgano.</div>';
+        return;
+      }
+
+      const infoHtml = `
+        <div class="ranking-info">
+          <h3>📈 Información del Ranking</h3>
+          <div class="ranking-stats">
+            <div class="stat-card">
+              <strong>Pacientes Compatibles:</strong>
+              <div class="stat-value">${ranking.length}</div>
+            </div>
+            <div class="stat-card">
+              <strong>Puntaje Máximo:</strong>
+              <div class="stat-value">${Math.max(...ranking.map(r => r.puntajeTotal)).toFixed(2)}</div>
+            </div>
+            <div class="stat-card">
+              <strong>Puntaje Mínimo:</strong>
+              <div class="stat-value">${Math.min(...ranking.map(r => r.puntajeTotal)).toFixed(2)}</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const tablaHtml = `
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align:center;">Posición</th>
+              <th>Nombre del Paciente</th>
+              <th>Tipo de Sangre</th>
+              <th>Órgano Requerido</th>
+              <th>Urgencia</th>
+              <th style="text-align:center;">Puntaje Total</th>
+              ${mostrarBotonAsignar ? '<th style="text-align:center;">Acciones</th>' : ''}
+            </tr>
+          </thead>
+          <tbody>
+            ${ranking.map(paciente => `
+              <tr>
+                <td style="text-align:center;">
+                  <div class="posicion-badge">${paciente.posicion}</div>
+                </td>
+                <td>${paciente.nombrePaciente}</td>
+                <td>${paciente.tipoSanguineo}</td>
+                <td>${paciente.organoRequerido}</td>
+                <td>
+                  <span class="urgencia-${paciente.nivelUrgencia.toLowerCase()}">
+                    ${paciente.nivelUrgencia}
+                  </span>
+                </td>
+                <td style="text-align:center;">
+                  <span class="puntaje-badge">${paciente.puntajeTotal.toFixed(2)}</span>
+                </td>
+                ${mostrarBotonAsignar ? `
+                  <td style="text-align:center;">
+                    <button class="btn btn-success btn-sm" onclick="abrirModalAsignar(${JSON.stringify(paciente).replace(/"/g, '&quot;')})">
+                      Asignar
+                    </button>
+                  </td>
+                ` : ''}
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+
+      container.innerHTML = infoHtml + tablaHtml;
+    }
+
+    // Modal para asignar
+    function abrirModalAsignar(paciente) {
+      pacienteSeleccionadoParaAsignar = paciente;
+      const pacienteInfo = document.getElementById('pacienteInfo');
+      pacienteInfo.innerHTML = `
+        <strong>${paciente.nombrePaciente}</strong><br>
+        Posición: ${paciente.posicion}<br>
+        Puntaje: ${paciente.puntajeTotal.toFixed(2)}<br>
+        Tipo de Sangre: ${paciente.tipoSanguineo}<br>
+        Urgencia: ${paciente.nivelUrgencia}
+      `;
+      document.getElementById('modalAsignar').classList.add('active');
+    }
+
+    function cerrarModalAsignar() {
+      document.getElementById('modalAsignar').classList.remove('active');
+      document.getElementById('justificacion').value = '';
+    }
+
+    async function confirmarAsignacion() {
+      if (!pacienteSeleccionadoParaAsignar || !organoSeleccionado) {
+        mostrarMensaje('Error: Información incompleta', 'error');
+        return;
+      }
+
+      const justificacion = document.getElementById('justificacion').value.trim();
+      if (!justificacion) {
+        mostrarMensaje('La justificación es obligatoria', 'warning');
+        return;
+      }
+
+      try {
+        // Actualizar estado del órgano a Asignado
+        const response = await fetch(`${apiBase}/organo/${organoSeleccionado}/estado`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nuevoEstado: 'Asignado',
+            observaciones: `Asignado a paciente ${pacienteSeleccionadoParaAsignar.nombrePaciente}. Justificación: ${justificacion}`
+          })
+        });
+
+        if (!response.ok) throw new Error('Error al asignar órgano');
+
+        mostrarMensaje(`Órgano asignado exitosamente a ${pacienteSeleccionadoParaAsignar.nombrePaciente}`, 'success');
+        cerrarModalAsignar();
+        cargarRankingPorOrgano();
+      } catch (error) {
+        mostrarMensaje(`Error: ${error.message}`, 'error');
+      }
+    }
+
+    // Utilidades
+    function mostrarCarga(containerId) {
+      document.getElementById(containerId).innerHTML = '<div class="loading"><div class="spinner"></div><p>Cargando ranking...</p></div>';
+    }
+
+    function mostrarMensaje(texto, tipo) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.innerHTML = `<div class="alert alert-${tipo}">${texto}</div>`;
+      setTimeout(() => { messageDiv.innerHTML = ''; }, 5000);
+    }
+
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', cargarOrganosDisponibles);
+  </script>
+</body>
+</html>
