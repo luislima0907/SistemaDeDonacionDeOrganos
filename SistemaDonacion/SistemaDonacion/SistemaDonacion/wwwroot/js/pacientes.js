@@ -115,7 +115,8 @@ function mostrarTablaPacientes() {
 
   pacientesData.forEach(p => {
     const badgeClass = `badge-${p.estado.toLowerCase()}`;
-    const badge = `<span class="badge ${badgeClass}">${p.estado}</span>`;
+    const estadoClass = p.estado.toLowerCase().replace(/\s+/g, '-');
+    const badge = `<span class="badge badge-${estadoClass}">${p.estado}</span>`;
     const urgenciaClass = `urgencia-${p.nivelUrgencia.toLowerCase()}`;
     const hospital = p.hospital ? p.hospital.nombre : `Hospital #${p.hospitalId}`;
     
