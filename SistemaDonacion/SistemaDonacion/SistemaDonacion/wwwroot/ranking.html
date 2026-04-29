@@ -122,28 +122,44 @@
   </div>
 
   <!-- Modal para asignar órgano -->
-  <div id="modalAsignar" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Información del Paciente</h2>
-        <button class="close-btn" onclick="cerrarModalAsignar()">×</button>
+<div id="modalAsignar" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Confirmar Asignación de Órgano</h2>
+      <button class="close-btn" onclick="cerrarModalAsignar()">×</button>
+    </div>
+    <div class="modal-body">
+
+      <div style="background:#f0f4ff; border:1px solid #667eea; border-radius:8px; padding:1.25rem; margin-bottom:1.5rem;">
+        <h3 style="margin:0 0 1rem; color:#667eea;">📋 Resumen de la Asignación</h3>
+        <div id="pacienteInfo" style="line-height:2;"></div>
       </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Detalles del Paciente Seleccionado</label>
-          <div id="pacienteInfo" style="padding:1rem; background:#f5f5f5; border-radius:4px; line-height:1.8;"></div>
-        </div>
-        <div class="alert alert-info" style="margin-top:1.5rem;">
-          <strong>⏳ Próximamente</strong><br>
-          La funcionalidad de asignación de órganos estará disponible en la próxima versión del sistema. Esta opción está siendo desarrollada por otro miembro del equipo.
-        </div>
+
+      <div class="form-group">
+        <label for="justificacion">Justificación *</label>
+        <textarea id="justificacion" rows="3" 
+          placeholder="Describa el motivo de esta asignación..."></textarea>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="cerrarModalAsignar()">Cerrar</button>
+
+      <div style="background:#fff3cd; border:1px solid #ffc107; border-radius:4px; padding:1rem; margin-top:1rem;">
+        <label style="display:flex; align-items:center; gap:.75rem; cursor:pointer; font-weight:600;">
+          <input type="checkbox" id="checkVerificado" 
+            onchange="toggleBotonConfirmar()"
+            style="width:18px; height:18px; cursor:pointer;" />
+          He verificado los datos del donante y receptor y confirmo que la asignación es correcta
+        </label>
       </div>
     </div>
-  </div>
 
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModalAsignar()">Cancelar</button>
+      <button class="btn btn-success" id="btnConfirmarAsignacion" 
+        onclick="confirmarAsignacion()" disabled>
+        ✓ Confirmar Asignación
+      </button>
+    </div>
+  </div>
+</div>
   <script>
     const apiBase = '/api';
     let rankingActual = [];
@@ -306,56 +322,96 @@
     }
 
     // Modal para asignar
-    function abrirModalAsignar(paciente) {
-      pacienteSeleccionadoParaAsignar = paciente;
-      const pacienteInfo = document.getElementById('pacienteInfo');
-      pacienteInfo.innerHTML = `
-        <strong>${paciente.nombrePaciente}</strong><br>
-        Posición: ${paciente.posicion}<br>
-        Puntaje: ${paciente.puntajeTotal.toFixed(2)}<br>
-        Tipo de Sangre: ${paciente.tipoSanguineo}<br>
-        Urgencia: ${paciente.nivelUrgencia}
-      `;
-      document.getElementById('modalAsignar').classList.add('active');
+function toggleBotonConfirmar() {
+  const check = document.getElementById('checkVerificado').checked;
+  document.getElementById('btnConfirmarAsignacion').disabled = !check;
+}
+
+function abrirModalAsignar(paciente) {
+  pacienteSeleccionadoParaAsignar = paciente;
+
+  // Obtener info del órgano seleccionado del select
+  const selectOrgano = document.getElementById('organoId');
+  const organoTexto = selectOrgano.options[selectOrgano.selectedIndex]?.text || 'N/A';
+
+  document.getElementById('pacienteInfo').innerHTML = `
+    <div><strong>🫀 Órgano:</strong> ${organoTexto}</div>
+    <div><strong>👤 Receptor:</strong> ${paciente.nombrePaciente}</div>
+    <div><strong>🩸 Tipo de Sangre:</strong> ${paciente.tipoSanguineo}</div>
+    <div><strong>⚠️ Urgencia:</strong> ${paciente.nivelUrgencia}</div>
+    <div><strong>📊 Posición en Ranking:</strong> #${paciente.posicion}</div>
+    <div><strong>🏅 Puntaje:</strong> ${paciente.puntajeTotal.toFixed(2)}</div>
+  `;
+
+  // Resetear el modal
+  document.getElementById('justificacion').value = '';
+  document.getElementById('checkVerificado').checked = false;
+  document.getElementById('btnConfirmarAsignacion').disabled = true;
+
+  document.getElementById('modalAsignar').classList.add('active');
+}
+
+function cerrarModalAsignar() {
+  document.getElementById('modalAsignar').classList.remove('active');
+  pacienteSeleccionadoParaAsignar = null;
+}
+
+async function confirmarAsignacion() {
+  if (!pacienteSeleccionadoParaAsignar || !organoSeleccionado) {
+    mostrarMensaje('Error: Información incompleta', 'error');
+    return;
+  }
+
+  const justificacion = document.getElementById('justificacion').value.trim();
+  if (!justificacion) {
+    mostrarMensaje('La justificación es obligatoria', 'warning');
+    return;
+  }
+
+  if (!document.getElementById('checkVerificado').checked) {
+    mostrarMensaje('Debe verificar los datos antes de confirmar', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('btnConfirmarAsignacion');
+  btn.disabled = true;
+  btn.textContent = 'Confirmando...';
+
+  try {
+    const res = await fetch('/api/asignacion/confirmar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        organoId: parseInt(organoSeleccionado),
+        pacienteId: pacienteSeleccionadoParaAsignar.pacienteId,
+        justificacion
+      })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      mostrarMensaje(
+        `✓ Asignación confirmada: ${data.paciente.nombre} recibirá el órgano. Estado actualizado correctamente.`,
+        'success'
+      );
+      cerrarModalAsignar();
+      // Recargar lista de órganos y limpiar ranking
+      await cargarOrganosDisponibles();
+      document.getElementById('rankingOrganoContainer').innerHTML = '';
+      document.getElementById('organoId').value = '';
+    } else {
+      mostrarMensaje(data.mensaje || 'Error al confirmar la asignación', 'error');
+      btn.disabled = false;
+      btn.textContent = '✓ Confirmar Asignación';
     }
-
-    function cerrarModalAsignar() {
-      document.getElementById('modalAsignar').classList.remove('active');
-      document.getElementById('justificacion').value = '';
-    }
-
-    async function confirmarAsignacion() {
-      if (!pacienteSeleccionadoParaAsignar || !organoSeleccionado) {
-        mostrarMensaje('Error: Información incompleta', 'error');
-        return;
-      }
-
-      const justificacion = document.getElementById('justificacion').value.trim();
-      if (!justificacion) {
-        mostrarMensaje('La justificación es obligatoria', 'warning');
-        return;
-      }
-
-      try {
-        // Actualizar estado del órgano a Asignado
-        const response = await fetch(`${apiBase}/organo/${organoSeleccionado}/estado`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nuevoEstado: 'Asignado',
-            observaciones: `Asignado a paciente ${pacienteSeleccionadoParaAsignar.nombrePaciente}. Justificación: ${justificacion}`
-          })
-        });
-
-        if (!response.ok) throw new Error('Error al asignar órgano');
-
-        mostrarMensaje(`Órgano asignado exitosamente a ${pacienteSeleccionadoParaAsignar.nombrePaciente}`, 'success');
-        cerrarModalAsignar();
-        cargarRankingPorOrgano();
-      } catch (error) {
-        mostrarMensaje(`Error: ${error.message}`, 'error');
-      }
-    }
+  } catch {
+    mostrarMensaje('Error al confirmar la asignación', 'error');
+    btn.disabled = false;
+    btn.textContent = '✓ Confirmar Asignación';
+  }
+}
 
     // Utilidades
     function mostrarCarga(containerId) {
