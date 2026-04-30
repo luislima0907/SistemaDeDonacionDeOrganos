@@ -1,0 +1,349 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditoría del Sistema - Sistema de Donación de Órganos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/dashboard.css" rel="stylesheet">
+    <style>
+        .bitacora-container {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+
+        .filter-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #007bff;
+        }
+
+        .stat-card.create {
+            border-left-color: #28a745;
+        }
+
+        .stat-card.update {
+            border-left-color: #ffc107;
+        }
+
+        .stat-card.delete {
+            border-left-color: #dc3545;
+        }
+
+        .stat-card h5 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .stat-card .number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .bitacora-table {
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .bitacora-table table {
+            margin-bottom: 0;
+        }
+
+        .bitacora-table thead {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .bitacora-table th {
+            padding: 15px;
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .bitacora-table td {
+            padding: 12px 15px;
+            vertical-align: middle;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .action-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .action-badge.create {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .action-badge.update {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .action-badge.delete {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .action-badge.consulta {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+        }
+
+        .details-btn {
+            padding: 4px 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .modal-content {
+            border-radius: 8px;
+        }
+
+        .modal-header {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .detail-row {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #666;
+            word-break: break-word;
+        }
+
+        .detail-value {
+            color: #333;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 0.9rem;
+            background-color: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 300px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .filter-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+
+        .date-range {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .badge-info {
+            background-color: #e7f3ff;
+            color: #004085;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .nav-tabs .nav-link {
+            color: #666;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #007bff;
+            border-bottom-color: #007bff;
+            background-color: transparent;
+        }
+
+        .tab-content {
+            border-top: 2px solid #dee2e6;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid bitacora-container">
+        <!-- Encabezado -->
+        <div class="mb-4">
+            <h1 class="mb-2">📋 Auditoría del Sistema</h1>
+            <p class="text-muted">Registro detallado de todas las acciones realizadas en el sistema</p>
+        </div>
+
+        <!-- Pestaña de Bitácora y Resumen -->
+        <ul class="nav nav-tabs mb-4" id="bitacoraTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="bitacora-tab" data-bs-toggle="tab" data-bs-target="#bitacora-content" type="button">
+                    📝 Bitácora Detallada
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="resumen-tab" data-bs-toggle="tab" data-bs-target="#resumen-content" type="button">
+                    📊 Resumen Estadístico
+                </button>
+            </li>
+        </ul>
+
+        <!-- Contenido de Bitácora -->
+        <div class="tab-content" id="bitacoraContent">
+            <div class="tab-pane fade show active" id="bitacora-content" role="tabpanel">
+                <!-- Tarjetas de Estadísticas -->
+                <div class="stats-cards" id="statsContainer">
+                    <div class="stat-card create">
+                        <h5>Registros Creados</h5>
+                        <div class="number" id="statCrear">-</div>
+                    </div>
+                    <div class="stat-card update">
+                        <h5>Registros Actualizados</h5>
+                        <div class="number" id="statActualizar">-</div>
+                    </div>
+                    <div class="stat-card delete">
+                        <h5>Registros Eliminados</h5>
+                        <div class="number" id="statEliminar">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h5>Total de Acciones</h5>
+                        <div class="number" id="statTotal">-</div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Bitácora -->
+                <div class="bitacora-table">
+                    <div id="bitacoraLoading" class="loading d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                    </div>
+                    <div id="bitacoraTableContent" class="table-responsive">
+                        <!-- Se poblará dinámicamente -->
+                    </div>
+                    <div id="emptyState" class="empty-state d-none">
+                        <i class="fas fa-inbox"></i>
+                        <h5>No hay registros de auditoría</h5>
+                        <p>No se encontraron registros en el sistema</p>
+                    </div>
+                </div>
+
+                <!-- Paginación -->
+                <div class="pagination-container d-none" id="paginationContainer">
+                    <div>
+                        <span id="paginationInfo"></span>
+                    </div>
+                    <nav>
+                        <ul class="pagination mb-0">
+                            <li class="page-item"><a class="page-link" href="#" onclick="paginaAnterior()">Anterior</a></li>
+                            <li class="page-item"><a class="page-link" href="#" onclick="paginaSiguiente()">Siguiente</a></li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Contenido de Resumen -->
+            <div class="tab-pane fade" id="resumen-content" role="tabpanel">
+                <div id="resumenContainer">
+                    <div class="loading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando resumen...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para detalles de bitácora -->
+    <div class="modal fade" id="detallesModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalles de la Auditoría</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <!-- Se poblará dinámicamente -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <script src="js/bitacora.js"></script>
+</body>
+</html>

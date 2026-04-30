@@ -12,11 +12,11 @@ namespace SistemaDonacion.Models
 
         [Required]
         [MaxLength(256)]
-        public string Accion { get; set; } = string.Empty; // Registrar Donante, Actualizar Estado, etc.
+        public string Accion { get; set; } = string.Empty; // Crear, Actualizar, Eliminar
 
         [Required]
         [MaxLength(100)]
-        public string Tabla { get; set; } = string.Empty; // Donantes, Organos
+        public string Tabla { get; set; } = string.Empty; // Donantes, Organos, Pacientes
 
         [Required]
         public int RegistroId { get; set; }
@@ -24,6 +24,10 @@ namespace SistemaDonacion.Models
         public string? DatosAnteriores { get; set; }
 
         public string? DatosNuevos { get; set; }
+
+        public string? DetallesCambios { get; set; }
+
+        public string? IPAddress { get; set; }
 
         public DateTime FechaAccion { get; set; } = DateTime.Now;
 
