@@ -16,7 +16,7 @@ namespace SistemaDonacion.Models
 
         [Required]
         [MaxLength(100)]
-        public string Tabla { get; set; } = string.Empty; // Donantes, Organos, Pacientes
+        public string Tabla { get; set; } = string.Empty; // Donantes, Organos, etc.
 
         [Required]
         public int RegistroId { get; set; }
@@ -25,13 +25,14 @@ namespace SistemaDonacion.Models
 
         public string? DatosNuevos { get; set; }
 
-        public string? DetallesCambios { get; set; }
+        public string? Detalles { get; set; }
 
+        //  AGREGADOS (estos faltaban y causaban el error)
         public string? IPAddress { get; set; }
 
-        public DateTime FechaAccion { get; set; } = DateTime.Now;
+        public string? DetallesCambios { get; set; }
 
-        public string? Detalles { get; set; }
+        public DateTime FechaAccion { get; set; } = DateTime.Now;
 
         // Relación con usuario
         [ForeignKey("UsuarioId")]

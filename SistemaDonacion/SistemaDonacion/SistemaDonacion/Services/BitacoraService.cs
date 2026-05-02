@@ -2,11 +2,10 @@
 using SistemaDonacion.Models;
 using SistemaDonacion.DTOs;
 using System.Text;
-using ClosedXML.Excel; // Para exportar a Excel
+using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore.Query;
 
 namespace SistemaDonacion.Services
 {
@@ -23,6 +22,14 @@ namespace SistemaDonacion.Services
         Task<List<BitacoraAccion>> ObtenerBitacorasPorUsuarioAsync(int usuarioId, DateTime? fechaInicio = null, DateTime? fechaFin = null);
 
         Task<List<BitacoraAccion>> ObtenerBitacorasRecentesAsync(int dias = 7);
+
+        Task<BitacoraPaginadaDto> ObtenerBitacorasFiltradaAsync(BitacoraFiltroDto filtro);
+
+        Task<List<BitacoraResumenDto>> ObtenerResumenAsync(DateTime fechaInicio, DateTime fechaFin);
+
+        Task<byte[]> ExportarExcelAsync(BitacoraFiltroDto filtro);
+
+        Task<byte[]> ExportarPdfAsync(BitacoraFiltroDto filtro);
     }
 
     public class BitacoraService : IBitacoraService
@@ -61,7 +68,6 @@ namespace SistemaDonacion.Services
             }
             catch (Exception ex)
             {
-                // Log del error pero no se relanza para evitar interrumpir operaciones críticas
                 Console.WriteLine($"Error al registrar bitácora: {ex.Message}");
             }
         }
@@ -79,7 +85,6 @@ namespace SistemaDonacion.Services
                     var entity = cambio.Entity;
                     var tipoEntidad = entity.GetType().Name;
 
-                    // Solo registrar cambios de entidades principales
                     if (!DebeRegistrarseEnBitacora(tipoEntidad))
                         continue;
 
@@ -117,9 +122,7 @@ namespace SistemaDonacion.Services
                 }
 
                 if (cambios.Any())
-                {
                     await _context.SaveChangesAsync();
-                }
             }
             catch (Exception ex)
             {
@@ -136,17 +139,19 @@ namespace SistemaDonacion.Services
                 .ToListAsync();
         }
 
-        public async Task<List<BitacoraAccion>> ObtenerBitacorasPorUsuarioAsync(int usuarioId, DateTime? fechaInicio = null, DateTime? fechaFin = null)
+        public async Task<List<BitacoraAccion>> ObtenerBitacorasPorUsuarioAsync(
+            int usuarioId, DateTime? fechaInicio = null, DateTime? fechaFin = null)
         {
             var query = _context.BitacoraAcciones
+                .Include(b => b.Usuario)
                 .Where(b => b.UsuarioId == usuarioId)
-                .Include(b => b.Usuario);
+                .AsQueryable();
 
             if (fechaInicio.HasValue)
-                query = (IIncludableQueryable<BitacoraAccion, ApplicationUser?>)query.Where(b => b.FechaAccion >= fechaInicio.Value);
+                query = query.Where(b => b.FechaAccion >= fechaInicio.Value);
 
             if (fechaFin.HasValue)
-                query = (IIncludableQueryable<BitacoraAccion, ApplicationUser?>)query.Where(b => b.FechaAccion <= fechaFin.Value);
+                query = query.Where(b => b.FechaAccion <= fechaFin.Value);
 
             return await query.OrderByDescending(b => b.FechaAccion).ToListAsync();
         }
@@ -161,81 +166,7 @@ namespace SistemaDonacion.Services
                 .ToListAsync();
         }
 
-        private bool DebeRegistrarseEnBitacora(string tipoEntidad)
-        {
-            var entidadesAuditadas = new[] { "Donante", "Organo", "Paciente", "ApplicationUser", "Hospital" };
-            return entidadesAuditadas.Contains(tipoEntidad);
-        }
-
-        private int? ObtenerIdEntidad(object entity)
-        {
-            var propiedad = entity.GetType().GetProperty("Id");
-            if (propiedad != null && propiedad.GetValue(entity) is int id)
-                return id;
-
-            return null;
-        }
-
-        private string SerializarEntidad(PropertyValues values)
-        {
-            try
-            {
-                var diccionario = new Dictionary<string, object?>();
-                foreach (var propiedad in values.Properties)
-                {
-                    var valor = values[propiedad];
-                    if (valor != null && !propiedad.Name.Contains("Password") && !propiedad.Name.Contains("Contrasenia"))
-                    {
-                        diccionario[propiedad.Name] = valor;
-                    }
-                }
-                return JsonSerializer.Serialize(diccionario);
-            }
-            catch
-            {
-                return "No serializable";
-            }
-        }
-
-        private string GenerarDetallesCambios(EntityEntry entry)
-        {
-            if (entry.State != EntityState.Modified)
-                return string.Empty;
-
-            var cambios = new List<string>();
-            foreach (var propiedad in entry.Properties)
-            {
-                if (propiedad.IsModified && !propiedad.Metadata.Name.Contains("Password") &&
-                    !propiedad.Metadata.Name.Contains("Contrasenia"))
-                {
-                    var anterior = propiedad.OriginalValue;
-                    var nuevo = propiedad.CurrentValue;
-                    cambios.Add($"{propiedad.Metadata.Name}: {anterior} → {nuevo}");
-                }
-            }
-
-            return string.Join("; ", cambios);
-        }
-
-        private string ObtenerIPCliente()
-        {
-            try
-            {
-                var context = _httpContextAccessor?.HttpContext;
-                if (context?.Request.Headers.ContainsKey("X-Forwarded-For") == true)
-                {
-                    return context.Request.Headers["X-Forwarded-For"].ToString().Split(',')[0].Trim();
-                }
-                return context?.Connection.RemoteIpAddress?.ToString() ?? "Desconocida";
-            }
-            catch
-            {
-                return "Desconocida";
-            }
-        }
-    }
-    // consulta paginada con filtros y validación de 6 meses
-public async Task<BitacoraPaginadaDto> ObtenerBitacorasFiltradaAsync(BitacoraFiltroDto filtro)
+        public async Task<BitacoraPaginadaDto> ObtenerBitacorasFiltradaAsync(BitacoraFiltroDto filtro)
         {
             var fechaFin = filtro.FechaFin ?? DateTime.Now;
             var fechaInicio = filtro.FechaInicio ?? fechaFin.AddDays(-30);
@@ -278,7 +209,7 @@ public async Task<BitacoraPaginadaDto> ObtenerBitacorasFiltradaAsync(BitacoraFil
                 {
                     Id = b.Id,
                     UsuarioId = b.UsuarioId,
-                    NombreUsuario = b.Usuario != null ? b.Usuario.UserName ?? "—" : "—",
+                    NombreUsuario = b.Usuario != null ? b.Usuario.Nombre ?? "—" : "—",
                     RolUsuario = b.Usuario != null ? b.Usuario.Rol ?? "—" : "—",
                     Accion = b.Accion,
                     Tabla = b.Tabla,
@@ -301,13 +232,12 @@ public async Task<BitacoraPaginadaDto> ObtenerBitacorasFiltradaAsync(BitacoraFil
                 TotalPaginas = (int)Math.Ceiling((double)total / pageSize),
                 FechaInicio = fechaInicio,
                 FechaFin = fechaFin,
-                TotalCrear = metricas.FirstOrDefault(m => m.Accion == "Crear")?.Count ?? 0,
-                TotalActualizar = metricas.FirstOrDefault(m => m.Accion == "Actualizar")?.Count ?? 0,
-                TotalEliminar = metricas.FirstOrDefault(m => m.Accion == "Eliminar")?.Count ?? 0,
+                TotalCrear = metricas.Where(m => m.Accion.Contains("Registrar", StringComparison.OrdinalIgnoreCase)).Sum(m => m.Count),
+                TotalActualizar = metricas.Where(m => m.Accion.Contains("Actualizar", StringComparison.OrdinalIgnoreCase)).Sum(m => m.Count),
+                TotalEliminar = metricas.Where(m => m.Accion.Contains("Eliminar", StringComparison.OrdinalIgnoreCase)).Sum(m => m.Count),
             };
         }
 
-        // resumen estadístico
         public async Task<List<BitacoraResumenDto>> ObtenerResumenAsync(DateTime fechaInicio, DateTime fechaFin)
         {
             if ((fechaFin - fechaInicio).TotalDays > 183)
@@ -330,7 +260,6 @@ public async Task<BitacoraPaginadaDto> ObtenerBitacorasFiltradaAsync(BitacoraFil
                 .ToListAsync();
         }
 
-        // exportar Excel
         public async Task<byte[]> ExportarExcelAsync(BitacoraFiltroDto filtro)
         {
             var resultado = await ObtenerBitacorasFiltradaAsync(filtro);
@@ -369,7 +298,6 @@ public async Task<BitacoraPaginadaDto> ObtenerBitacorasFiltradaAsync(BitacoraFil
             return stream.ToArray();
         }
 
-        // exportar PDF 
         public async Task<byte[]> ExportarPdfAsync(BitacoraFiltroDto filtro)
         {
             var resultado = await ObtenerBitacorasFiltradaAsync(filtro);
@@ -382,6 +310,76 @@ public async Task<BitacoraPaginadaDto> ObtenerBitacorasFiltradaAsync(BitacoraFil
                               $"{r.Tabla},{r.RegistroId},\"{r.Detalles}\"");
 
             return Encoding.UTF8.GetBytes(sb.ToString());
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Métodos privados de utilidad
+        // ─────────────────────────────────────────────────────────────────────
+
+        private bool DebeRegistrarseEnBitacora(string tipoEntidad)
+        {
+            var entidadesAuditadas = new[] { "Donante", "Organo", "Paciente", "ApplicationUser", "Hospital" };
+            return entidadesAuditadas.Contains(tipoEntidad);
+        }
+
+        private int? ObtenerIdEntidad(object entity)
+        {
+            var propiedad = entity.GetType().GetProperty("Id");
+            if (propiedad != null && propiedad.GetValue(entity) is int id)
+                return id;
+            return null;
+        }
+
+        private string SerializarEntidad(PropertyValues values)
+        {
+            try
+            {
+                var diccionario = new Dictionary<string, object?>();
+                foreach (var propiedad in values.Properties)
+                {
+                    var valor = values[propiedad];
+                    if (valor != null && !propiedad.Name.Contains("Password") && !propiedad.Name.Contains("Contrasenia"))
+                        diccionario[propiedad.Name] = valor;
+                }
+                return JsonSerializer.Serialize(diccionario);
+            }
+            catch
+            {
+                return "No serializable";
+            }
+        }
+
+        private string GenerarDetallesCambios(EntityEntry entry)
+        {
+            if (entry.State != EntityState.Modified)
+                return string.Empty;
+
+            var cambios = new List<string>();
+            foreach (var propiedad in entry.Properties)
+            {
+                if (propiedad.IsModified &&
+                    !propiedad.Metadata.Name.Contains("Password") &&
+                    !propiedad.Metadata.Name.Contains("Contrasenia"))
+                {
+                    cambios.Add($"{propiedad.Metadata.Name}: {propiedad.OriginalValue} → {propiedad.CurrentValue}");
+                }
+            }
+            return string.Join("; ", cambios);
+        }
+
+        private string ObtenerIPCliente()
+        {
+            try
+            {
+                var context = _httpContextAccessor?.HttpContext;
+                if (context?.Request.Headers.ContainsKey("X-Forwarded-For") == true)
+                    return context.Request.Headers["X-Forwarded-For"].ToString().Split(',')[0].Trim();
+                return context?.Connection.RemoteIpAddress?.ToString() ?? "Desconocida";
+            }
+            catch
+            {
+                return "Desconocida";
+            }
         }
     }
 }

@@ -39,8 +39,9 @@ namespace SistemaDonacion.Data
                     .HasMaxLength(50)
                     .HasDefaultValue("Medico");
 
-                // Relación con Hospital - nullable pque un usuario podría no estar asociado a un hospital
+                // Relación con Hospital - nullable porque un usuario podría no estar asociado a un hospital
                 b.Property(u => u.HospitalId).IsRequired(false);
+
                 b.HasOne(u => u.Hospital)
                     .WithMany()
                     .HasForeignKey(u => u.HospitalId)
@@ -102,7 +103,8 @@ namespace SistemaDonacion.Data
                     .IsRequired()
                     .HasMaxLength(10);
 
-                b.Property(d => d.Edad).IsRequired();
+                b.Property(d => d.Edad)
+                    .IsRequired();
 
                 b.Property(d => d.FechaRegistro)
                     .HasDefaultValue(DateTime.Now);
@@ -111,7 +113,8 @@ namespace SistemaDonacion.Data
                     .HasMaxLength(50)
                     .HasDefaultValue("Disponible");
 
-                b.Property(d => d.HospitalId).IsRequired();
+                b.Property(d => d.HospitalId)
+                    .IsRequired();
 
                 b.HasOne(d => d.Hospital)
                     .WithMany(h => h.Donantes)
@@ -132,7 +135,8 @@ namespace SistemaDonacion.Data
                 b.ToTable("Organos");
                 b.HasKey(o => o.Id);
 
-                b.Property(o => o.DonanteId).IsRequired();
+                b.Property(o => o.DonanteId)
+                    .IsRequired();
 
                 b.Property(o => o.TipoOrgano)
                     .IsRequired()
@@ -155,7 +159,8 @@ namespace SistemaDonacion.Data
                 b.ToTable("BitacoraAcciones");
                 b.HasKey(ba => ba.Id);
 
-                b.Property(ba => ba.UsuarioId).IsRequired();
+                b.Property(ba => ba.UsuarioId)
+                    .IsRequired();
 
                 b.Property(ba => ba.Accion)
                     .IsRequired()
@@ -165,7 +170,8 @@ namespace SistemaDonacion.Data
                     .IsRequired()
                     .HasMaxLength(100);
 
-                b.Property(ba => ba.RegistroId).IsRequired();
+                b.Property(ba => ba.RegistroId)
+                    .IsRequired();
 
                 b.Property(ba => ba.FechaAccion)
                     .HasDefaultValue(DateTime.Now);
@@ -185,12 +191,28 @@ namespace SistemaDonacion.Data
                 b.ToTable("Pacientes");
                 b.HasKey(p => p.Id);
 
-                b.Property(p => p.Nombre).IsRequired().HasMaxLength(256);
-                b.Property(p => p.TipoSanguineo).IsRequired().HasMaxLength(10);
-                b.Property(p => p.OrganoRequerido).IsRequired().HasMaxLength(100);
-                b.Property(p => p.NivelUrgencia).IsRequired().HasMaxLength(20);
-                b.Property(p => p.Estado).HasMaxLength(50).HasDefaultValue("Activo");
-                b.Property(p => p.HospitalId).IsRequired();
+                b.Property(p => p.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(256);
+
+                b.Property(p => p.TipoSanguineo)
+                    .IsRequired()
+                    .HasMaxLength(10);
+
+                b.Property(p => p.OrganoRequerido)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                b.Property(p => p.NivelUrgencia)
+                    .IsRequired()
+                    .HasMaxLength(20);
+
+                b.Property(p => p.Estado)
+                    .HasMaxLength(50)
+                    .HasDefaultValue("Activo");
+
+                b.Property(p => p.HospitalId)
+                    .IsRequired();
 
                 b.HasOne(p => p.Hospital)
                     .WithMany()
@@ -200,8 +222,39 @@ namespace SistemaDonacion.Data
                 b.HasIndex(p => p.Estado);
                 b.HasIndex(p => p.TipoSanguineo);
                 b.HasIndex(p => p.NivelUrgencia);
-                b.HasIndex(p => p.HospitalId); //Indice para filtrar por hospital
+                b.HasIndex(p => p.HospitalId); // Índice para filtrar por hospital
             });
+        }
+
+        public override int SaveChanges()
+        {
+            ValidarInmutabilidadBitacora();
+            return base.SaveChanges();
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            ValidarInmutabilidadBitacora();
+            return base.SaveChangesAsync(cancellationToken);
+        }
+
+        private void ValidarInmutabilidadBitacora()
+        {
+            var cambiosNoPermitidos = ChangeTracker.Entries<BitacoraAccion>()
+                .Where(e => e.State == EntityState.Modified || e.State == EntityState.Deleted)
+                .ToList();
+
+            if (!cambiosNoPermitidos.Any())
+                return;
+
+            var accionesBloqueadas = string.Join(", ",
+                cambiosNoPermitidos.Select(e =>
+                    $"ID: {e.Entity.Id}, Estado: {e.State}"
+                ));
+
+            throw new InvalidOperationException(
+                $"Operación no permitida. Los registros de bitácora son inmutables y no pueden ser modificados ni eliminados. Registros bloqueados: {accionesBloqueadas}"
+            );
         }
     }
 }

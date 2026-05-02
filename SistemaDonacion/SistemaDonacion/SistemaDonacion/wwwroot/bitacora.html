@@ -20,6 +20,21 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
+        .integrity-alert {
+            border-left: 5px solid #0dcaf0;
+            border-radius: 8px;
+            background-color: #e7f8fc;
+            color: #055160;
+            padding: 14px 18px;
+            margin-top: 15px;
+            margin-bottom: 20px;
+        }
+
+            .integrity-alert strong {
+                display: block;
+                margin-bottom: 4px;
+            }
+
         .stats-cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -35,31 +50,31 @@
             border-left: 4px solid #007bff;
         }
 
-        .stat-card.create {
-            border-left-color: #28a745;
-        }
+            .stat-card.create {
+                border-left-color: #28a745;
+            }
 
-        .stat-card.update {
-            border-left-color: #ffc107;
-        }
+            .stat-card.update {
+                border-left-color: #ffc107;
+            }
 
-        .stat-card.delete {
-            border-left-color: #dc3545;
-        }
+            .stat-card.delete {
+                border-left-color: #dc3545;
+            }
 
-        .stat-card h5 {
-            margin: 0 0 10px 0;
-            color: #666;
-            font-size: 0.9rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
+            .stat-card h5 {
+                margin: 0 0 10px 0;
+                color: #666;
+                font-size: 0.9rem;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
 
-        .stat-card .number {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #333;
-        }
+            .stat-card .number {
+                font-size: 2rem;
+                font-weight: bold;
+                color: #333;
+            }
 
         .bitacora-table {
             background-color: white;
@@ -68,27 +83,27 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        .bitacora-table table {
-            margin-bottom: 0;
-        }
+            .bitacora-table table {
+                margin-bottom: 0;
+            }
 
-        .bitacora-table thead {
-            background-color: #f8f9fa;
-            border-bottom: 2px solid #dee2e6;
-        }
+            .bitacora-table thead {
+                background-color: #f8f9fa;
+                border-bottom: 2px solid #dee2e6;
+            }
 
-        .bitacora-table th {
-            padding: 15px;
-            font-weight: 600;
-            color: #333;
-            white-space: nowrap;
-        }
+            .bitacora-table th {
+                padding: 15px;
+                font-weight: 600;
+                color: #333;
+                white-space: nowrap;
+            }
 
-        .bitacora-table td {
-            padding: 12px 15px;
-            vertical-align: middle;
-            border-bottom: 1px solid #dee2e6;
-        }
+            .bitacora-table td {
+                padding: 12px 15px;
+                vertical-align: middle;
+                border-bottom: 1px solid #dee2e6;
+            }
 
         .action-badge {
             display: inline-block;
@@ -98,25 +113,25 @@
             font-weight: 600;
         }
 
-        .action-badge.create {
-            background-color: #d4edda;
-            color: #155724;
-        }
+            .action-badge.create {
+                background-color: #d4edda;
+                color: #155724;
+            }
 
-        .action-badge.update {
-            background-color: #fff3cd;
-            color: #856404;
-        }
+            .action-badge.update {
+                background-color: #fff3cd;
+                color: #856404;
+            }
 
-        .action-badge.delete {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
+            .action-badge.delete {
+                background-color: #f8d7da;
+                color: #721c24;
+            }
 
-        .action-badge.consulta {
-            background-color: #d1ecf1;
-            color: #0c5460;
-        }
+            .action-badge.consulta {
+                background-color: #d1ecf1;
+                color: #0c5460;
+            }
 
         .table-responsive {
             overflow-x: auto;
@@ -155,9 +170,9 @@
             border-bottom: 1px solid #dee2e6;
         }
 
-        .detail-row:last-child {
-            border-bottom: none;
-        }
+            .detail-row:last-child {
+                border-bottom: none;
+            }
 
         .detail-label {
             font-weight: 600;
@@ -189,15 +204,15 @@
             color: #999;
         }
 
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            opacity: 0.5;
-        }
+            .empty-state i {
+                font-size: 3rem;
+                margin-bottom: 20px;
+                opacity: 0.5;
+            }
 
         .filter-form {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 15px;
             align-items: end;
         }
@@ -206,6 +221,14 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
+            grid-column: span 2;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+            flex-wrap: wrap;
         }
 
         .badge-info {
@@ -223,11 +246,11 @@
             cursor: pointer;
         }
 
-        .nav-tabs .nav-link.active {
-            color: #007bff;
-            border-bottom-color: #007bff;
-            background-color: transparent;
-        }
+            .nav-tabs .nav-link.active {
+                color: #007bff;
+                border-bottom-color: #007bff;
+                background-color: transparent;
+            }
 
         .tab-content {
             border-top: 2px solid #dee2e6;
@@ -241,6 +264,57 @@
         <div class="mb-4">
             <h1 class="mb-2">📋 Auditoría del Sistema</h1>
             <p class="text-muted">Registro detallado de todas las acciones realizadas en el sistema</p>
+
+            <div class="integrity-alert" role="alert">
+                <strong>Bitácora protegida e inmutable</strong>
+                Esta sección es únicamente informativa. Los registros de auditoría no pueden editarse ni eliminarse, con el fin de garantizar la integridad, trazabilidad y seguridad de la información del sistema.
+            </div>
+        </div>
+
+        <!-- Sección de filtros -->
+        <div class="filter-section">
+            <form id="filterForm" class="filter-form">
+                <div>
+                    <label class="form-label">Período</label>
+                    <select id="filterDias" class="form-select">
+                        <option value="7">Últimos 7 días</option>
+                        <option value="30" selected>Últimos 30 días</option>
+                        <option value="90">Últimos 90 días</option>
+                        <option value="365">Último año (365 días)</option>
+                        <option value="custom">Rango personalizado</option>
+                    </select>
+                </div>
+
+                <div class="date-range" id="customDateRange" style="display:none;">
+                    <div>
+                        <label class="form-label">Fecha inicio</label>
+                        <input type="date" id="filterFechaInicio" class="form-control" />
+                    </div>
+                    <div>
+                        <label class="form-label">Fecha fin</label>
+                        <input type="date" id="filterFechaFin" class="form-control" />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="form-label">Tabla</label>
+                    <select id="filterTabla" class="form-select">
+                        <option value="">-- Todas las tablas --</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="form-label">Acción</label>
+                    <select id="filterAccion" class="form-select">
+                        <option value="">-- Todas las acciones --</option>
+                    </select>
+                </div>
+
+                <div class="filter-buttons">
+                    <button type="button" id="applyFilters" class="btn btn-primary">Aplicar filtros</button>
+                    <button type="button" id="clearFilters" class="btn btn-secondary">Limpiar</button>
+                </div>
+            </form>
         </div>
 
         <!-- Pestaña de Bitácora y Resumen -->
@@ -263,8 +337,8 @@
                 <!-- Tarjetas de Estadísticas -->
                 <div class="stats-cards" id="statsContainer">
                     <div class="stat-card create">
-                        <h5>Registros Creados</h5>
-                        <div class="number" id="statCrear">-</div>
+                        <h5>Registros Registrados</h5>
+                        <div class="number" id="statRegistrar">-</div>
                     </div>
                     <div class="stat-card update">
                         <h5>Registros Actualizados</h5>
@@ -304,8 +378,12 @@
                     </div>
                     <nav>
                         <ul class="pagination mb-0">
-                            <li class="page-item"><a class="page-link" href="#" onclick="paginaAnterior()">Anterior</a></li>
-                            <li class="page-item"><a class="page-link" href="#" onclick="paginaSiguiente()">Siguiente</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#" onclick="paginaAnterior()">Anterior</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="#" onclick="paginaSiguiente()">Siguiente</a>
+                            </li>
                         </ul>
                     </nav>
                 </div>

@@ -15,7 +15,10 @@ builder.Services.AddRazorComponents()
 // Add Antiforgery services
 builder.Services.AddAntiforgery();
 
-// Add DbContext (SQL Server) - tabla Usuarios 
+// HttpContextAccessor
+builder.Services.AddHttpContextAccessor();
+
+// Add DbContext (SQL Server) - tabla Usuarios
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
@@ -33,10 +36,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.AccessDeniedPath = "/acceso-denegado.html";
     });
 
+// Services
 builder.Services.AddScoped<IPasswordHashService, PasswordHashService>();
 builder.Services.AddScoped<IBitacoraService, BitacoraService>();
 builder.Services.AddScoped<IRankingService, RankingService>();
-builder.Services.AddHttpContextAccessor();
 
 // Configurar JSON para ignorar referencias circulares
 builder.Services.AddControllers()
@@ -59,14 +62,14 @@ else
     app.UseHttpsRedirection();
 }
 
-// Explicit routing
+// Routing
 app.UseRouting();
 
-// Authentication y Authorization ANTES de UseStaticFiles
+// Authentication y Authorization antes de los archivos estáticos
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Mapear rutas protegidas ANTES de servir archivos estáticos
+// Rutas protegidas
 app.MapGet("/admin.html", async context =>
 {
     if (!context.User.Identity?.IsAuthenticated ?? true)
@@ -74,13 +77,16 @@ app.MapGet("/admin.html", async context =>
         context.Response.Redirect("/login.html");
         return;
     }
+
     var role = context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+
     if (!role.Equals("Administrador", StringComparison.OrdinalIgnoreCase) &&
         !role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
     {
         context.Response.Redirect("/acceso-denegado.html");
         return;
     }
+
     var path = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "admin.html");
     context.Response.ContentType = "text/html; charset=utf-8";
     await context.Response.SendFileAsync(path);
@@ -93,14 +99,17 @@ app.MapGet("/medico.html", async context =>
         context.Response.Redirect("/login.html");
         return;
     }
+
     var role = context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
-    if (!role.Equals("Medico", StringComparison.OrdinalIgnoreCase) && 
+
+    if (!role.Equals("Medico", StringComparison.OrdinalIgnoreCase) &&
         !role.Equals("Administrador", StringComparison.OrdinalIgnoreCase) &&
         !role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
     {
         context.Response.Redirect("/acceso-denegado.html");
         return;
     }
+
     var path = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "medico.html");
     context.Response.ContentType = "text/html; charset=utf-8";
     await context.Response.SendFileAsync(path);
@@ -113,22 +122,18 @@ app.MapGet("/donantes.html", async context =>
         context.Response.Redirect("/login.html");
         return;
     }
+
     var role = context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
-    if (!role.Equals("Medico", StringComparison.OrdinalIgnoreCase) && 
+
+    if (!role.Equals("Medico", StringComparison.OrdinalIgnoreCase) &&
         !role.Equals("Administrador", StringComparison.OrdinalIgnoreCase) &&
         !role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
     {
         context.Response.Redirect("/acceso-denegado.html");
         return;
     }
-    var path = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "donantes.html");
-    context.Response.ContentType = "text/html; charset=utf-8";
-    await context.Response.SendFileAsync(path);
-});
 
-app.MapGet("/acceso-denegado.html", async context =>
-{
-    var path = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "acceso-denegado.html");
+    var path = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "donantes.html");
     context.Response.ContentType = "text/html; charset=utf-8";
     await context.Response.SendFileAsync(path);
 });
@@ -140,14 +145,17 @@ app.MapGet("/pacientes.html", async context =>
         context.Response.Redirect("/login.html");
         return;
     }
+
     var role = context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
-    if (!role.Equals("Medico", StringComparison.OrdinalIgnoreCase) && 
+
+    if (!role.Equals("Medico", StringComparison.OrdinalIgnoreCase) &&
         !role.Equals("Administrador", StringComparison.OrdinalIgnoreCase) &&
         !role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
     {
         context.Response.Redirect("/acceso-denegado.html");
         return;
     }
+
     var path = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "pacientes.html");
     context.Response.ContentType = "text/html; charset=utf-8";
     await context.Response.SendFileAsync(path);
@@ -160,13 +168,16 @@ app.MapGet("/ranking.html", async context =>
         context.Response.Redirect("/login.html");
         return;
     }
+
     var role = context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+
     if (!role.Equals("Administrador", StringComparison.OrdinalIgnoreCase) &&
         !role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
     {
         context.Response.Redirect("/acceso-denegado.html");
         return;
     }
+
     var path = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "ranking.html");
     context.Response.ContentType = "text/html; charset=utf-8";
     await context.Response.SendFileAsync(path);
@@ -179,30 +190,41 @@ app.MapGet("/bitacora.html", async context =>
         context.Response.Redirect("/login.html");
         return;
     }
+
     var role = context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+
     if (!role.Equals("Administrador", StringComparison.OrdinalIgnoreCase) &&
         !role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
     {
         context.Response.Redirect("/acceso-denegado.html");
         return;
     }
+
     var path = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "bitacora.html");
     context.Response.ContentType = "text/html; charset=utf-8";
     await context.Response.SendFileAsync(path);
 });
 
-// Add Antiforgery middleware
+app.MapGet("/acceso-denegado.html", async context =>
+{
+    var path = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "acceso-denegado.html");
+    context.Response.ContentType = "text/html; charset=utf-8";
+    await context.Response.SendFileAsync(path);
+});
+
+// Middleware
 app.UseAntiforgery();
 
-// Serve static files DESPUÉS de las validaciones
+// Archivos estáticos después de las validaciones
 app.UseStaticFiles();
 
 app.MapControllers();
 
-// Map root to login.html
+// Root
 app.MapGet("/", async context =>
 {
     var path = Path.Combine(app.Environment.ContentRootPath, "wwwroot", "login.html");
+
     if (File.Exists(path))
     {
         context.Response.ContentType = "text/html; charset=utf-8";
