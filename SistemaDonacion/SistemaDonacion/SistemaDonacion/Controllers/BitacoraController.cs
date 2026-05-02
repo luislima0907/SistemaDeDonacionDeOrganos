@@ -48,8 +48,8 @@ namespace SistemaDonacion.Controllers
         /// Obtiene las bitácoras de un usuario específico
         /// </summary>
         [HttpGet("usuario/{usuarioId}")]
-        public async Task<IActionResult> ObtenerBitacorasUsuario(int usuarioId, 
-            [FromQuery] DateTime? fechaInicio = null, 
+        public async Task<IActionResult> ObtenerBitacorasUsuario(int usuarioId,
+            [FromQuery] DateTime? fechaInicio = null,
             [FromQuery] DateTime? fechaFin = null)
         {
             try
@@ -175,11 +175,27 @@ namespace SistemaDonacion.Controllers
                 if (!string.IsNullOrEmpty(accion))
                     bitacoras = bitacoras.Where(b => b.Accion.Contains(accion, StringComparison.OrdinalIgnoreCase)).ToList();
 
+                // Calcular conteos por acción (usando Contains para más flexibilidad)
+                var totalCrear = bitacoras.Count(b =>
+                    b.Accion != null && (b.Accion.Contains("Registrar", StringComparison.OrdinalIgnoreCase) ||
+                    b.Accion.Equals("Registrar", StringComparison.OrdinalIgnoreCase)));
+
+                var totalActualizar = bitacoras.Count(b =>
+                    b.Accion != null && (b.Accion.Contains("Actualizar", StringComparison.OrdinalIgnoreCase) ||
+                    b.Accion.Equals("Actualizar", StringComparison.OrdinalIgnoreCase)));
+
+                var totalEliminar = bitacoras.Count(b =>
+                    b.Accion != null && (b.Accion.Contains("Eliminar", StringComparison.OrdinalIgnoreCase) ||
+                    b.Accion.Equals("Eliminar", StringComparison.OrdinalIgnoreCase)));
+
                 return Ok(new
                 {
                     success = true,
                     data = bitacoras,
                     total = bitacoras.Count,
+                    totalRegistrar = totalCrear,
+                    totalActualizar = totalActualizar,
+                    totalEliminar = totalEliminar,
                     filtros = new { dias, tabla, accion },
                     message = "Todas las bitácoras obtenidas exitosamente"
                 });
@@ -190,6 +206,99 @@ namespace SistemaDonacion.Controllers
                 {
                     success = false,
                     message = $"Error al obtener bitácoras: {ex.Message}"
+                });
+            }
+        }
+
+        // Nuevo endpoint para filtrado avanzado y paginado desde frontend
+        [HttpGet("filtrada")]
+        public async Task<IActionResult> ObtenerBitacorasFiltrada(
+            [FromQuery] DateTime? fechaInicio = null,
+            [FromQuery] DateTime? fechaFin = null,
+            [FromQuery] string? tabla = null,
+            [FromQuery] string? accion = null,
+            [FromQuery] int pagina = 1,
+            [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                // Construir DTO de filtro (definido en los servicios)
+                var filtro = new SistemaDonacion.DTOs.BitacoraFiltroDto
+                {
+                    FechaInicio = fechaInicio,
+                    FechaFin = fechaFin,
+                    Tabla = tabla,
+                    Accion = accion,
+                    Pagina = pagina,
+                    PageSize = pageSize
+                };
+
+                var resultado = await _bitacoraService.ObtenerBitacorasFiltradaAsync(filtro);
+
+                return Ok(new
+                {
+                    success = true,
+                    data = resultado.Data,
+                    total = resultado.Total,
+                    pagina = resultado.Pagina,
+                    pageSize = resultado.PageSize,
+                    totalPaginas = resultado.TotalPaginas,
+                    fechaInicio = resultado.FechaInicio.ToString("yyyy-MM-dd HH:mm:ss"),
+                    fechaFin = resultado.FechaFin.ToString("yyyy-MM-dd HH:mm:ss"),
+                    totalRegistrar = resultado.TotalCrear,
+                    totalActualizar = resultado.TotalActualizar,
+                    totalEliminar = resultado.TotalEliminar,
+                    message = "Bitácoras filtradas obtenidas exitosamente"
+                });
+            }
+            catch (ArgumentException argEx)
+            {
+                return BadRequest(new { success = false, message = argEx.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = $"Error al obtener bitácoras filtradas: {ex.Message}"
+                });
+            }
+        }
+
+        // Nuevo endpoint para obtener tablas y acciones disponibles
+        [HttpGet("opciones")]
+        public async Task<IActionResult> ObtenerOpcionesDisponibles()
+        {
+            try
+            {
+                var bitacoras = await _bitacoraService.ObtenerBitacorasRecentesAsync(365);
+
+                var tablas = bitacoras
+                    .Select(b => b.Tabla)
+                    .Distinct()
+                    .OrderBy(t => t)
+                    .ToList();
+
+                var acciones = bitacoras
+                    .Select(b => b.Accion)
+                    .Distinct()
+                    .OrderBy(a => a)
+                    .ToList();
+
+                return Ok(new
+                {
+                    success = true,
+                    tablas = tablas,
+                    acciones = acciones,
+                    message = "Opciones obtenidas exitosamente"
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = $"Error al obtener opciones: {ex.Message}"
                 });
             }
         }
