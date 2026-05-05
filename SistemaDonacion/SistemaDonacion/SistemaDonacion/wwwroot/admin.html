@@ -3,216 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Dashboard Administrativo - Sistema de Donación de Órganos">
     <title>Dashboard Administrativo - Sistema de Donación de Órganos</title>
-
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #1f2937;
-        }
-
-        .container {
-            width: 90%;
-            max-width: 1180px;
-            margin: 30px auto;
-            background: #ffffff;
-            border-radius: 12px;
-            padding: 40px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        h1 {
-            font-size: 2.2rem;
-            margin-bottom: 20px;
-            color: #1f3b57;
-        }
-
-        .message {
-            background-color: #d4edda;
-            color: #034d1f;
-            border-left: 5px solid #198754;
-            padding: 16px 18px;
-            border-radius: 6px;
-            margin-bottom: 32px;
-            font-size: 1rem;
-        }
-
-            .message strong {
-                color: #004b23;
-            }
-
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 24px;
-        }
-
-        .menu-card {
-            min-height: 230px;
-            border-radius: 8px;
-            padding: 28px;
-            color: white;
-            text-decoration: none;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.14);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-            .menu-card:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 12px 22px rgba(0, 0, 0, 0.18);
-                color: white;
-            }
-
-        .menu-icon {
-            font-size: 3rem;
-            margin-bottom: 16px;
-        }
-
-        .menu-card h3 {
-            margin: 0 0 12px 0;
-            font-size: 1.35rem;
-            font-weight: bold;
-        }
-
-        .menu-card p {
-            margin: 0;
-            font-size: 0.95rem;
-            line-height: 1.5;
-        }
-
-        .bitacora-note {
-            margin-top: 10px;
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 600;
-            opacity: 0.95;
-        }
-
-        .bitacora-btn {
-            margin-top: 14px;
-            padding: 8px 12px;
-            border-radius: 6px;
-            background: #ffffff;
-            color: #185a9d;
-            font-weight: bold;
-            display: inline-block;
-        }
-
-        .logout-btn {
-            position: fixed;
-            right: 25px;
-            bottom: 25px;
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 7px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
-        }
-
-            .logout-btn:hover {
-                background: #bb2d3b;
-            }
-
-        @media (max-width: 768px) {
-            .container {
-                width: 94%;
-                padding: 25px;
-                margin: 20px auto;
-            }
-
-            h1 {
-                font-size: 1.8rem;
-            }
-
-            .menu-card {
-                min-height: 210px;
-                padding: 24px;
-            }
-
-            .menu-icon {
-                font-size: 2.5rem;
-            }
-
-            .logout-btn {
-                right: 15px;
-                bottom: 15px;
-                padding: 10px 16px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="./css/admin.css">
 </head>
-
 <body>
-    <div class="container">
-        <h1>✓ Dashboard Administrativo</h1>
+    <div class="admin-container">
+        <header class="admin-header">
+            <div class="header-content">
+                <h1 class="admin-title">
+                    <span class="title-icon">📊</span>
+                    <span class="title-text">Dashboard</span>
+                    <span class="title-accent">Administrativo</span>
+                </h1>
+                <p class="header-subtitle">Centro de Control - Sistema de Donación de Órganos</p>
+            </div>
+        </header>
 
-        <div class="message">
-            <strong>¡Bienvenido, Administrador!</strong> Has iniciado sesión correctamente en el rol de Administrador.
-        </div>
-
-        <div class="menu-grid">
-
-            <a href="/donantes.html" class="menu-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <div class="menu-icon">🩸</div>
-                <h3>Gestión de Donantes y Órganos</h3>
-                <p>Registra y gestiona donantes y sus órganos disponibles</p>
-            </a>
-
-            <a href="/pacientes.html" class="menu-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                <div class="menu-icon">👥</div>
-                <h3>Gestión de Pacientes</h3>
-                <p>Registra pacientes en lista de espera</p>
-            </a>
-
-            <div class="menu-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); cursor: default;">
-                <div class="menu-icon">⚙️</div>
-                <h3>Administración de Usuarios</h3>
-                <p>Próximamente: gestiona usuarios y roles</p>
+        <main class="admin-main">
+            <!-- Mensaje de bienvenida mejorado -->
+            <div class="welcome-card" role="status" aria-live="polite">
+                <span class="welcome-icon">✓</span>
+                <div class="welcome-content">
+                    <strong class="welcome-title">¡Bienvenido, Administrador!</strong>
+                    <p class="welcome-subtitle">Has iniciado sesión correctamente. Accede a las funcionalidades disponibles.</p>
+                </div>
             </div>
 
-            <div class="menu-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); cursor: default;">
-                <div class="menu-icon">📊</div>
-                <h3>Reportes</h3>
-                <p>Próximamente: genera reportes y estadísticas</p>
+            <!-- Indicadores de Estadísticas -->
+            <div class="stats-container" role="region" aria-label="Indicadores de estadísticas">
+                <div class="stat-card stat-card--organs">
+                    <div class="stat-icon">🫀</div>
+                    <div class="stat-content">
+                        <p class="stat-label">Órganos Disponibles</p>
+                        <p class="stat-value" id="organsCount">0</p>
+                        <p class="stat-subtitle">Órganos viables y listos</p>
+                    </div>
+                </div>
+
+                <div class="stat-card stat-card--patients">
+                    <div class="stat-icon">👨‍⚕️</div>
+                    <div class="stat-content">
+                        <p class="stat-label">Pacientes en Espera</p>
+                        <p class="stat-value" id="patientsCount">0</p>
+                        <p class="stat-subtitle">En lista de prioridades</p>
+                    </div>
+                </div>
+
+                <div class="stat-card stat-card--donors">
+                    <div class="stat-icon">🩸</div>
+                    <div class="stat-content">
+                        <p class="stat-label">Donantes Activos</p>
+                        <p class="stat-value" id="donorsCount">0</p>
+                        <p class="stat-subtitle">Donantes registrados</p>
+                    </div>
+                </div>
+
+                <div class="stat-card stat-card--hospitals">
+                    <div class="stat-icon">🏥</div>
+                    <div class="stat-content">
+                        <p class="stat-label">Hospitales Participantes</p>
+                        <p class="stat-value" id="hospitalsCount">0</p>
+                        <p class="stat-subtitle">Hospitales conectados</p>
+                    </div>
+                </div>
             </div>
 
-            <!-- BITÁCORA FUNCIONAL - RF-17 -->
-            <a href="/bitacora.html" class="menu-card" style="background: linear-gradient(135deg, #43cea2 0%, #185a9d 100%);">
-                <div class="menu-icon">📋</div>
-                <h3>Bitácora de Auditoría</h3>
-                <p>Consulta movimientos, acciones y cambios realizados en el sistema.</p>
+            <!-- Grid de menú con tarjetas -->
+            <div class="menu-grid" role="navigation" aria-label="Menú principal de administración">
+                
+                <!-- Tarjeta: Gestión de Donantes y Órganos -->
+                <a href="/donantes.html" 
+                   class="menu-card menu-card--active" 
+                   data-section="donantes"
+                   data-ripple="true"
+                   aria-label="Ir a gestión de donantes y órganos">
+                    <div class="menu-card-inner">
+                        <div class="menu-icon">🩸</div>
+                        <h2 class="menu-card-title">Gestión de Donantes y Órganos</h2>
+                        <p class="menu-card-description">Registra y gestiona donantes y sus órganos disponibles</p>
+                    </div>
+                </a>
 
-                <small class="bitacora-note">
-                    Solo lectura | Registros protegidos contra edición y eliminación
-                </small>
+                <!-- Tarjeta: Gestión de Pacientes -->
+                <a href="/pacientes.html" 
+                   class="menu-card menu-card--active" 
+                   data-section="pacientes"
+                   data-ripple="true"
+                   aria-label="Ir a gestión de pacientes">
+                    <div class="menu-card-inner">
+                        <div class="menu-icon">👥</div>
+                        <h2 class="menu-card-title">Gestión de Pacientes</h2>
+                        <p class="menu-card-description">Registra pacientes en lista de espera</p>
+                    </div>
+                </a>
 
-                <span class="bitacora-btn">
-                    Ver Bitácora
-                </span>
-            </a>
+                <!-- Tarjeta: Ranking de Prioridades -->
+                <a href="/ranking.html" 
+                   class="menu-card menu-card--active" 
+                   data-section="ranking"
+                   data-ripple="true"
+                   aria-label="Ir a ranking de prioridades">
+                    <div class="menu-card-inner">
+                        <div class="menu-icon">🏆</div>
+                        <h2 class="menu-card-title">Ranking de Prioridades</h2>
+                        <p class="menu-card-description">Visualiza el ranking de pacientes según prioridad</p>
+                    </div>
+                </a>
 
-        </div>
+                <!-- Tarjeta: Bitácora de Auditoría -->
+                <a href="/bitacora.html" 
+                   class="menu-card menu-card--active" 
+                   data-section="bitacora"
+                   data-ripple="true"
+                   aria-label="Ir a bitácora de auditoría">
+                    <div class="menu-card-inner">
+                        <div class="menu-icon">📋</div>
+                        <h2 class="menu-card-title">Bitácora de Auditoría</h2>
+                        <p class="menu-card-description">Consulta movimientos, acciones y cambios realizados en el sistema.</p>
+                        <small class="bitacora-note">
+                            Solo lectura | Registros protegidos contra edición y eliminación
+                        </small>
+                    </div>
+                </a>
+
+            </div>
+        </main>
     </div>
 
-    <button class="logout-btn" id="btnLogout" onclick="cerrarSesion()">
+    <!-- Botón de cierre de sesión -->
+    <button class="logout-btn" 
+            id="btnLogout" 
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión">
         Cerrar sesión
     </button>
 
+    <!-- Scripts -->
     <script src="./js/dashboard.js"></script>
+    <script src="./js/admin.js"></script>
 </body>
 </html>
