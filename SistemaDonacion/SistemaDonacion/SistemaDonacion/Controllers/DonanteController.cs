@@ -211,6 +211,24 @@ namespace SistemaDonacion.Controllers
 
             return Ok(organos);
         }
+
+        // GET: api/donante/activos - Obtener conteo de donantes activos
+        [HttpGet("activos")]
+        public async Task<ActionResult<object>> GetDonantesActivos()
+        {
+            try
+            {
+                var count = await _context.Donantes
+                    .Where(d => d.Estado == "Disponible")
+                    .CountAsync();
+
+                return Ok(new { count });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
     }
 
     public class CreateDonanteRequest

@@ -128,6 +128,24 @@ namespace SistemaDonacion.Controllers
 
             return Ok(new { mensaje = "Estado del hospital actualizado correctamente", hospital });
         }
+
+        // GET: api/hospital/activos - Obtener conteo de hospitales activos
+        [HttpGet("activos")]
+        public async Task<ActionResult<object>> GetHospitalesActivos()
+        {
+            try
+            {
+                var count = await _context.Hospitales
+                    .Where(h => h.Estado)
+                    .CountAsync();
+
+                return Ok(new { count });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
     }
 
     public class CreateHospitalRequest
@@ -153,4 +171,3 @@ namespace SistemaDonacion.Controllers
         public bool Activo { get; set; }
     }
 }
-

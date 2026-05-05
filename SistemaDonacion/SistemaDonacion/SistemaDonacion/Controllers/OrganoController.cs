@@ -83,6 +83,24 @@ namespace SistemaDonacion.Controllers
             return Ok(resultado);
         }
 
+        // GET: api/organo/disponibles - Obtener conteo de órganos disponibles
+        [HttpGet("disponibles")]
+        public async Task<ActionResult<object>> GetOrganosDisponibles()
+        {
+            try
+            {
+                var count = await _context.Organos
+                    .Where(o => o.Estado == "Disponible")
+                    .CountAsync();
+
+                return Ok(new { count });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
         // GET: api/organo/ranking-tipo/{tipoOrgano}/{tipoSanguineo} - Obtener ranking por tipo de órgano
         [HttpGet("ranking-tipo/{tipoOrgano}/{tipoSanguineo}")]
         public async Task<ActionResult<List<RankingPrioridad>>> ObtenerRankingPorTipo(string tipoOrgano, string tipoSanguineo)

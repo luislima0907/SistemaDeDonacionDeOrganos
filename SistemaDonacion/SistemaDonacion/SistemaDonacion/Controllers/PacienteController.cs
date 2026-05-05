@@ -354,6 +354,24 @@ namespace SistemaDonacion.Controllers
                 return StatusCode(500, new { mensaje = "Error al actualizar el paciente", detalle = ex.Message });
             }
         }
+
+        // GET: api/paciente/activos - Obtener conteo de pacientes activos
+        [HttpGet("activos")]
+        public async Task<ActionResult<object>> GetPacientesActivos()
+        {
+            try
+            {
+                var count = await _context.Pacientes
+                    .Where(p => p.Estado == "Activo")
+                    .CountAsync();
+
+                return Ok(new { count });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
     }
 
     public class CreatePacienteRequest
