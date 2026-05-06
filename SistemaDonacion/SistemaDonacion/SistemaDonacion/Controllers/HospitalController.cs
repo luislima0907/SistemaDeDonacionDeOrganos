@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using SistemaDonacion.Data;
 using SistemaDonacion.Models;
+using System.Security.Claims;
 
 namespace SistemaDonacion.Controllers
 {
@@ -24,6 +25,50 @@ namespace SistemaDonacion.Controllers
                 .Where(h => h.Estado)
                 .ToListAsync();
             return Ok(hospitales);
+        }
+
+        // GET: api/hospital/mi-hospital - Obtener solo el hospital del usuario autenticado
+        [HttpGet("mi-hospital")]
+        public async Task<ActionResult<object>> GetMiHospital()
+        {
+            try
+            {
+                var valor = User.FindFirst("HospitalId")?.Value;
+                if (!int.TryParse(valor, out var hospitalId) || hospitalId <= 0)
+                {
+                    return Unauthorized(new { mensaje = "No tiene un hospital asignado. Contacte al administrador." });
+                }
+
+                var rol = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+                
+                // Si es administrador, devolver null o un mensaje específico
+                if (rol.Equals("Administrador", StringComparison.OrdinalIgnoreCase) ||
+                    rol.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                {
+                    return BadRequest(new { mensaje = "Los administradores deben seleccionar el hospital manualmente" });
+                }
+
+                var hospital = await _context.Hospitales
+                    .Where(h => h.Id == hospitalId && h.Estado)
+                    .FirstOrDefaultAsync();
+
+                if (hospital == null)
+                    return NotFound(new { mensaje = "Hospital no encontrado o inactivo" });
+
+                return Ok(new
+                {
+                    hospital.Id,
+                    hospital.Nombre,
+                    hospital.Ciudad,
+                    hospital.Pais,
+                    hospital.Email,
+                    hospital.Telefono
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { mensaje = "Error al obtener el hospital", error = ex.Message });
+            }
         }
 
         // GET: api/hospital/{id} - Obtener un hospital específico
