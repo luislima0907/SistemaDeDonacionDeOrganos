@@ -22,19 +22,41 @@ function mostrarMensaje(texto, tipo = 'info') {
 
 async function cargarHospitalesPacientes() {
   try {
-    const res = await fetch('/api/hospital', { credentials: 'include' });
-    if (!res.ok) throw new Error();
-    const hospitales = await res.json();
-    const select = document.getElementById('hospitalId');
-    select.innerHTML = '<option value="">Seleccionar hospital...</option>';
-    hospitales.forEach(h => {
+    // Primero intentar cargar el hospital del usuario autenticado
+    let res = await fetch('/api/hospital/mi-hospital', { credentials: 'include' });
+    
+    if (res.status === 403 || res.status === 400) {
+      // Si es administrador, cargar todos los hospitales
+      res = await fetch('/api/hospital', { credentials: 'include' });
+      if (!res.ok) throw new Error();
+      const hospitales = await res.json();
+      const select = document.getElementById('hospitalId');
+      select.innerHTML = '<option value="">Seleccionar hospital...</option>';
+      hospitales.forEach(h => {
+        const opt = document.createElement('option');
+        opt.value = h.id;
+        opt.textContent = `${h.nombre} (${h.ciudad})`;
+        select.appendChild(opt);
+      });
+    } else if (res.ok) {
+      // Cargar solo el hospital del usuario
+      const hospital = await res.json();
+      const select = document.getElementById('hospitalId');
+      select.innerHTML = '';
       const opt = document.createElement('option');
-      opt.value = h.id;
-      opt.textContent = `${h.nombre} (${h.ciudad})`;
+      opt.value = hospital.id;
+      opt.textContent = `${hospital.nombre} (${hospital.ciudad})`;
+      opt.selected = true;
       select.appendChild(opt);
-    });
+      // Deshabilitar el select para que no puedan cambiar de hospital
+      select.disabled = true;
+    } else {
+      throw new Error();
+    }
   } catch {
     mostrarMensaje('Error al cargar hospitales', 'error');
+    const select = document.getElementById('hospitalId');
+    select.innerHTML = '<option value="">Error al cargar hospitales</option>';
   }
 }
 

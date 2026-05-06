@@ -60,16 +60,35 @@ function mostrarMensaje(texto, tipo = 'info') {
 // Cargar hospitales desde API
 async function cargarHospitales() {
   try {
-    const res = await fetch('/api/hospital', {
+    // Primero intentar cargar el hospital del usuario autenticado
+    let res = await fetch('/api/hospital/mi-hospital', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include'
     });
 
-    if (!res.ok) throw new Error('Error al cargar hospitales');
+    if (res.status === 403 || res.status === 400) {
+      // Si es administrador, cargar todos los hospitales
+      res = await fetch('/api/hospital', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
 
-    hospitalesData = await res.json();
-    actualizarSelectHospitales();
+      if (!res.ok) throw new Error('Error al cargar hospitales');
+
+      hospitalesData = await res.json();
+      actualizarSelectHospitales();
+    } else if (res.ok) {
+      // Cargar solo el hospital del usuario
+      const hospital = await res.json();
+      hospitalesData = [hospital];
+      actualizarSelectHospitales();
+      // Deshabilitar el select para que no puedan cambiar de hospital
+      document.getElementById('hospitalId').disabled = true;
+    } else {
+      throw new Error('Error al cargar hospitales');
+    }
   } catch (error) {
     console.error('Error:', error);
     mostrarMensaje('Error al cargar hospitales', 'error');
@@ -85,6 +104,7 @@ function actualizarSelectHospitales() {
     const option = document.createElement('option');
     option.value = hospital.id;
     option.textContent = `${hospital.nombre} (${hospital.ciudad})`;
+    option.selected = true; // Seleccionar automáticamente si es solo uno
     select.appendChild(option);
   });
 }
