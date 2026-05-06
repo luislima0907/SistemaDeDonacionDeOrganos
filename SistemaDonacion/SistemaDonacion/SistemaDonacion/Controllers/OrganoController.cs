@@ -21,36 +21,47 @@ namespace SistemaDonacion.Controllers
             _bitacora = bitacora;
             _rankingService = rankingService;
         }
+        private int? ObtenerHospitalIdDelUsuario()
+        {
+            var valor = User.FindFirst("HospitalId")?.Value;
+            if (int.TryParse(valor, out var id) && id > 0)
+                return id;
+            return null;
+        }
 
         // GET: api/organo - Obtener todos los órganos
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<object>>> GetOrganos()
+public async Task<ActionResult<IEnumerable<object>>> GetOrganos()
+{
+    var rol = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+    IQueryable<Organo> query = _context.Organos.Include(o => o.Donante);
+
+    if (!rol.Equals("Administrador", StringComparison.OrdinalIgnoreCase) &&
+        !rol.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+    {
+        var hospitalId = ObtenerHospitalIdDelUsuario();
+        if (hospitalId == null)
+            return Unauthorized(new { mensaje = "No tiene un hospital asignado. Contacte al administrador." });
+
+        // Filtrar por hospital del donante
+        query = query.Where(o => o.Donante != null && o.Donante.HospitalId == hospitalId.Value);
+    }
+
+    var organos = await query.ToListAsync();
+
+    var resultado = organos.Select(o => new
+    {
+        o.Id, o.DonanteId, o.TipoOrgano, o.Estado,
+        o.FechaDisponibilidad, o.Compatibilidad, o.FechaActualizacion,
+        Donante = o.Donante != null ? new
         {
-            var organos = await _context.Organos
-                .Include(o => o.Donante)
-                .ToListAsync();
+            o.Donante.Id, o.Donante.Nombre,
+            o.Donante.TipoSanguineo, o.Donante.Edad, o.Donante.Estado
+        } : null
+    }).ToList();
 
-            var resultado = organos.Select(o => new
-            {
-                o.Id,
-                o.DonanteId,
-                o.TipoOrgano,
-                o.Estado,
-                o.FechaDisponibilidad,
-                o.Compatibilidad,
-                o.FechaActualizacion,
-                Donante = o.Donante != null ? new
-                {
-                    o.Donante.Id,
-                    o.Donante.Nombre,
-                    o.Donante.TipoSanguineo,
-                    o.Donante.Edad,
-                    o.Donante.Estado
-                } : null
-            }).ToList();
-
-            return Ok(resultado);
-        }
+    return Ok(resultado);
+}
 
         // GET: api/organo/disponibles/{tipoOrgano} - Obtener órganos disponibles por tipo
         [HttpGet("disponibles/{tipoOrgano}")]
@@ -316,7 +327,20 @@ namespace SistemaDonacion.Controllers
             // Validar que el donante existe
             var donante = await _context.Donantes.FindAsync(request.DonanteId);
             if (donante == null)
+            
                 return NotFound(new { mensaje = "Donante no encontrado" });
+            
+            var rol = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+            if (!rol.Equals("Administrador", StringComparison.OrdinalIgnoreCase) &&
+                !rol.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+            {
+                var hospitalId = ObtenerHospitalIdDelUsuario();
+                if (hospitalId == null)
+                    return Unauthorized(new { mensaje = "No tiene un hospital asignado." });
+
+                if (donante.HospitalId != hospitalId.Value)
+                    return StatusCode(403, new { mensaje = "No tiene permisos para registrar órganos de donantes de otro hospital" });
+            }
 
             // Validar datos obligatorios
             if (string.IsNullOrWhiteSpace(request.TipoOrgano))

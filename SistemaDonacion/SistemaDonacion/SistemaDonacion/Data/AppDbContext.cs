@@ -224,6 +224,8 @@ namespace SistemaDonacion.Data
                 b.HasIndex(p => p.NivelUrgencia);
                 b.HasIndex(p => p.HospitalId); // Índice para filtrar por hospital
             });
+
+            
         }
 
         public override int SaveChanges()
