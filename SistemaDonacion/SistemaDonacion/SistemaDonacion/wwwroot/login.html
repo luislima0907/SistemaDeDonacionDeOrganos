@@ -1,118 +1,112 @@
-﻿<!doctype html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Login - Sistema Donación</title>
-  <style>
-    body { font-family: Arial, Helvetica, sans-serif; padding: 2rem; background: #f5f5f5; }
-    .container { max-width: 400px; margin: 0 auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    h2 { text-align: center; color: #333; }
-    label { display:block; margin-top: 1rem; font-weight: bold; }
-    input { width:100%; padding: .5rem; margin-top: .25rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-    button { width: 100%; margin-top: 1rem; padding: .75rem 1rem; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: bold; }
-    button:hover { background: #0056b3; }
-    button:disabled { background: #ccc; cursor: not-allowed; }
-    .error { color: #b00020; margin-top: .5rem; padding: 0.75rem; background: #ffebee; border: 1px solid #ffcdd2; border-radius: 4px; }
-    .success { color: #007700; margin-top: .5rem; padding: 0.75rem; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 4px; }
-    .info { color: #333; text-align: center; margin-top: 1rem; font-size: 0.9rem; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Iniciar Sesión - Sistema de Donación de Órganos">
+    <title>Iniciar Sesión - Sistema de Donación de Órganos</title>
+    <link rel="stylesheet" href="./css/login.css">
 </head>
 <body>
-  <div class="container">
-    <h2>Iniciar Sesión</h2>
-    <form id="loginForm" onsubmit="return false;">
-      <label>Usuario
-        <input type="text" id="username" autocomplete="username" required />
-      </label>
-      <label>Contraseña
-        <input type="password" id="password" autocomplete="current-password" required minlength="6" />
-      </label>
-      <button id="submit" type="button">Iniciar Sesión</button>
-    </form>
-    <div id="message" role="status"></div>
-    <div class="info">
-      <p><strong>Credenciales de prueba:</strong></p>
-      <p>Administrador: admin / Admin123!</p>
-      <p>Médico: medico1 / Medico123!</p>
+    <div class="login-wrapper">
+        <!-- Fondo animado -->
+        <div class="background-gradient"></div>
+
+        <!-- Contenedor principal -->
+        <div class="login-container">
+            <!-- Encabezado con logo -->
+            <div class="login-header">
+                <div class="logo-icon">🏥</div>
+                <h1 class="login-title">
+                    <span class="title-text">Sistema de</span>
+                    <span class="title-accent">Donación de Órganos</span>
+                </h1>
+                <p class="login-subtitle">Centro de Coordinación y Gestión</p>
+            </div>
+
+            <!-- Formulario de login -->
+            <form id="loginForm" class="login-form" novalidate>
+                <!-- Campo Usuario -->
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <span class="input-icon">👤</span>
+                        <input 
+                            type="text" 
+                            id="username" 
+                            class="input-field"
+                            placeholder="Nombre de usuario"
+                            autocomplete="username"
+                            required
+                            aria-label="Nombre de usuario"
+                        />
+                        <span class="validation-icon" id="usernameValidation"></span>
+                    </div>
+                    <div class="error-message" id="usernameError" role="alert"></div>
+                </div>
+
+                <!-- Campo Contraseña -->
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            class="input-field"
+                            placeholder="Contraseña"
+                            autocomplete="current-password"
+                            required
+                            minlength="6"
+                            aria-label="Contraseña"
+                        />
+                        <button 
+                            type="button" 
+                            class="toggle-password"
+                            id="togglePassword"
+                            aria-label="Mostrar/ocultar contraseña"
+                            title="Mostrar/ocultar contraseña"
+                        >
+                            👁️
+                        </button>
+                        <span class="validation-icon" id="passwordValidation"></span>
+                    </div>
+                    <div class="error-message" id="passwordError" role="alert"></div>
+                </div>
+
+                <!-- Botón de envío -->
+                <button id="submitBtn" type="submit" class="submit-button">
+                    <span class="button-text">Iniciar Sesión</span>
+                    <span class="button-spinner" style="display: none;"></span>
+                </button>
+
+                <!-- Mensaje de estado -->
+                <div id="message" class="message-container" role="status" aria-live="polite"></div>
+            </form>
+
+            <!-- Información de credenciales de prueba -->
+            <div class="credentials-info">
+                <details>
+                    <summary>📋 Credenciales de prueba</summary>
+                    <div class="credentials-list">
+                        <div class="credential-item">
+                            <span class="credential-role">Administrador:</span>
+                            <code>admin / Admin123!</code>
+                        </div>
+                        <div class="credential-item">
+                            <span class="credential-role">Médico:</span>
+                            <code>medico1 / Medico123!</code>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="login-footer">
+            <p>&copy; 2026 Sistema de Donación de Órganos. Todos los derechos reservados.</p>
+        </footer>
     </div>
-  </div>
 
-  <script>
-    const form = document.getElementById('loginForm');
-    const message = document.getElementById('message');
-    const btn = document.getElementById('submit');
-
-    btn.addEventListener('click', async () => {
-      message.textContent = '';
-      message.className = '';
-
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
-
-      if (!username || !password) {
-        message.textContent = 'Debe completar todos los campos';
-        message.className = 'error';
-        return;
-      }
-
-      if (password.length < 6) {
-        message.textContent = 'La contraseña debe tener al menos 6 caracteres';
-        message.className = 'error';
-        return;
-      }
-
-      btn.disabled = true;
-      btn.textContent = 'Enviando...';
-
-      try {
-        const res = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
-          credentials: 'include'
-        });
-
-        const data = await res.json().catch(() => ({}));
-
-        if (res.ok) {
-          message.textContent = 'Inicio de sesión correcto. Redirigiendo...';
-          message.className = 'success';
-          
-          // Redirigir según rol
-          setTimeout(() => {
-            if (data && data.role) {
-              if (data.role.toLowerCase() === 'administrador' || data.role.toLowerCase() === 'admin') {
-                window.location.href = '/admin.html';
-              } else if (data.role.toLowerCase() === 'medico') {
-                window.location.href = '/medico.html';
-              } else {
-                window.location.href = '/';
-              }
-            } else {
-              window.location.href = '/';
-            }
-          }, 500);
-        } else {
-          message.textContent = (data && data.message) ? data.message : 'Credenciales inválidas';
-          message.className = 'error';
-        }
-      } catch (err) {
-        console.error(err);
-        message.textContent = 'Error al intentar iniciar sesión, intente nuevamente';
-        message.className = 'error';
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Iniciar Sesión';
-      }
-    });
-
-    // Permitir envío con Enter
-    document.getElementById('password').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        btn.click();
-      }
-    });
-  </script>
+    <!-- Scripts -->
+    <script src="./js/login.js"></script>
 </body>
 </html>
