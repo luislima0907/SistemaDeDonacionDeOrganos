@@ -1,92 +1,108 @@
-﻿<!doctype html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Panel Médico - Sistema Donación</title>
-  <link rel="stylesheet" href="./css/dashboard.css" />
-  <style>
-    .message {
-      background: #d4edda;
-      border-left-color: #198754;
-      color: #155724;
-    }
-
-    .message strong {
-      color: #0f5132;
-    }
-
-    .menu-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin-top: 2rem;
-    }
-
-    .menu-card {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 2rem;
-      border-radius: 8px;
-      text-decoration: none;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      cursor: pointer;
-      min-height: 150px;
-    }
-
-    .menu-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-    }
-
-    .menu-card h3 {
-      margin: 1rem 0 0.5rem 0;
-      font-size: 1.3rem;
-    }
-
-    .menu-card p {
-      margin: 0;
-      font-size: 0.9rem;
-      opacity: 0.9;
-    }
-
-    .menu-icon {
-      font-size: 2.5rem;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Dashboard Médico - Sistema de Donación de Órganos">
+    <title>Dashboard Médico - Sistema de Donación de Órganos</title>
+    <link rel="stylesheet" href="./css/dashboard-global.css">
+    <link rel="stylesheet" href="./css/medico.css">
 </head>
 <body>
-  <div class="container">
-    <h1>✓ Panel Médico</h1>
-    <div class="message">
-      <strong>¡Bienvenido, Médico!</strong> Has iniciado sesión correctamente en el rol de Médico.
+    <div class="medico-container">
+        <header class="medico-header">
+            <div class="header-content">
+                <h1 class="medico-title">
+                    <span class="title-icon">🏥</span>
+                    <span class="title-text">Panel</span>
+                    <span class="title-accent">Médico</span>
+                </h1>
+                <p class="header-subtitle">Centro de Operaciones - Sistema de Donación de Órganos</p>
+            </div>
+        </header>
+
+        <main class="medico-main">
+            <!-- Mensaje de bienvenida mejorado -->
+            <div class="welcome-card" role="status" aria-live="polite">
+                <span class="welcome-icon">✓</span>
+                <div class="welcome-content">
+                    <strong class="welcome-title">¡Bienvenido, Médico!</strong>
+                    <p class="welcome-subtitle">Has iniciado sesión correctamente. Accede a las funcionalidades disponibles.</p>
+                </div>
+            </div>
+
+            <!-- Indicadores de Estadísticas -->
+            <div class="stats-container" role="region" aria-label="Indicadores de estadísticas">
+                <div class="stat-card stat-card--organs">
+                    <div class="stat-icon">🫀</div>
+                    <div class="stat-content">
+                        <p class="stat-label">Órganos Disponibles</p>
+                        <p class="stat-value" id="organsCount">0</p>
+                        <p class="stat-subtitle">Órganos viables y listos</p>
+                    </div>
+                </div>
+
+                <div class="stat-card stat-card--patients">
+                    <div class="stat-icon">👨‍⚕️</div>
+                    <div class="stat-content">
+                        <p class="stat-label">Pacientes en Espera</p>
+                        <p class="stat-value" id="patientsCount">0</p>
+                        <p class="stat-subtitle">En lista de prioridades</p>
+                    </div>
+                </div>
+
+                <div class="stat-card stat-card--donors">
+                    <div class="stat-icon">🩸</div>
+                    <div class="stat-content">
+                        <p class="stat-label">Donantes Activos</p>
+                        <p class="stat-value" id="donorsCount">0</p>
+                        <p class="stat-subtitle">Donantes registrados</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid de menú con tarjetas -->
+            <div class="menu-grid" role="navigation" aria-label="Menú principal médico">
+                
+                <!-- Tarjeta: Gestión de Donantes y Órganos -->
+                <a href="/donantes.html" 
+                   class="menu-card menu-card--active" 
+                   data-section="donantes"
+                   data-ripple="true"
+                   aria-label="Ir a gestión de donantes y órganos">
+                    <div class="menu-card-inner">
+                        <div class="menu-icon">🩸</div>
+                        <h2 class="menu-card-title">Gestión de Donantes y Órganos</h2>
+                        <p class="menu-card-description">Registra y gestiona donantes y sus órganos disponibles</p>
+                    </div>
+                </a>
+
+                <!-- Tarjeta: Gestión de Pacientes -->
+                <a href="/pacientes.html" 
+                   class="menu-card menu-card--active" 
+                   data-section="pacientes"
+                   data-ripple="true"
+                   aria-label="Ir a gestión de pacientes">
+                    <div class="menu-card-inner">
+                        <div class="menu-icon">👥</div>
+                        <h2 class="menu-card-title">Gestión de Pacientes</h2>
+                        <p class="menu-card-description">Registra pacientes en lista de espera</p>
+                    </div>
+                </a>
+            </div>
+        </main>
     </div>
 
-    <div class="menu-grid">
-      <a href="/donantes.html" class="menu-card">
-        <div class="menu-icon">🩸</div>
-        <h3>Gestión de Donantes y Órganos</h3>
-        <p>Registra y gestiona donantes y sus órganos disponibles</p>
-      </a>
-      <a href="/pacientes.html"  class="menu-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); cursor: default;">
-          <div class="menu-icon">👥</div>
-          <h3>Gestión de Pacientes</h3>
-          <p>Registra pacientes en lista de espera</p>
-        </a>
-      <div class="menu-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); cursor: default;">
-        <div class="menu-icon">📊</div>
-        <h3>Mis Asignaciones</h3>
-        <p>Próximamente: consulta las asignaciones realizadas</p>
-      </div>
-    </div>
-  </div>
-  <button class="logout-btn" id="btnLogout" onclick="cerrarSesion()">Cerrar sesión</button>
-  <script src="./js/dashboard.js"></script>
+    <!-- Botón de cierre de sesión -->
+    <button class="logout-btn" 
+            id="btnLogout" 
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión">
+        Cerrar sesión
+    </button>
+
+    <!-- Scripts -->
+    <script src="./js/dashboard-global.js"></script>
+    <script src="./js/medico.js"></script>
 </body>
 </html>
