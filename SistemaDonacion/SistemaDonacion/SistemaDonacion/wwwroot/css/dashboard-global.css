@@ -1,0 +1,190 @@
+﻿/**
+ * dashboard-global.css
+ * Estilos compartidos para todos los dashboards (Admin, Médico, etc.)
+ * Reutilizable en cualquier página que necesite los componentes comunes
+ */
+
+:root {
+    /* Colores Base */
+    --color-primary: #667eea;
+    --color-primary-hover: #5568d3;
+    --color-secondary: #764ba2;
+    
+    /* Estados */
+    --color-success: #198754;
+    --color-success-bg: #d4edda;
+    --color-error: #dc3545;
+    
+    /* Texto */
+    --text-primary: #1f3b57;
+    --text-secondary: #4b5563;
+    --text-light: #9ca3af;
+    --text-white: #ffffff;
+    
+    /* Espaciado */
+    --spacing-xs: 8px;
+    --spacing-sm: 12px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    --spacing-2xl: 40px;
+    
+    /* Border Radius */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    
+    /* Sombras */
+    --shadow-button: 0 6px 14px rgba(0, 0, 0, 0.2);
+    
+    /* Transiciones */
+    --transition-fast: 0.15s ease-out;
+    --transition-normal: 0.2s ease;
+    --transition-slow: 0.3s ease;
+    --transition-smooth: 0.5s ease-in-out;
+}
+
+/* Respeto a preferencia de movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --transition-fast: 0s;
+        --transition-normal: 0s;
+        --transition-slow: 0s;
+        --transition-smooth: 0s;
+    }
+}
+
+/**
+ * BOTÓN DE CIERRE DE SESIÓN GLOBAL
+ * Componente reutilizable para cualquier dashboard
+ */
+
+.logout-btn {
+    position: fixed;
+    top: 25px;
+    right: 25px;
+    background: linear-gradient(135deg, var(--color-error) 0%, #a02a3a 100%);
+    color: var(--text-white);
+    border: none;
+    padding: 14px 24px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    box-shadow: var(--shadow-button);
+    transition: all var(--transition-normal);
+    z-index: 1000;
+    letter-spacing: 0.3px;
+    font-family: Arial, Helvetica, sans-serif;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    overflow: hidden;
+    animation: subtlePulse 2s ease-in-out infinite;
+}
+
+/* Efecto de brillo en el botón */
+.logout-btn::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+    animation: buttonShine 3s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes buttonShine {
+    0% {
+        transform: translate(-100%, -100%) scale(0.5);
+    }
+    50% {
+        transform: translate(0, 0) scale(1);
+    }
+    100% {
+        transform: translate(100%, 100%) scale(1.5);
+    }
+}
+
+/* Icono animado del botón */
+.logout-btn::after {
+    content: '⟶';
+    margin-left: 6px;
+    transition: transform var(--transition-normal), margin-left var(--transition-normal);
+}
+
+.logout-btn:hover::after {
+    transform: translateX(4px);
+}
+
+.logout-btn:hover {
+    background: linear-gradient(135deg, #b83039 0%, #8a1f2a 100%);
+    box-shadow: 0 12px 28px rgba(220, 53, 69, 0.4),
+                0 0 20px rgba(220, 53, 69, 0.3);
+    transform: translateY(-3px);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.logout-btn:active {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(220, 53, 69, 0.3);
+}
+
+.logout-btn:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+@keyframes subtlePulse {
+    0%, 100% {
+        box-shadow: var(--shadow-button);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+    50% {
+        box-shadow: var(--shadow-button), 0 0 15px rgba(220, 53, 69, 0.2);
+        border-color: rgba(255, 255, 255, 0.25);
+    }
+}
+
+/* Respuesta táctil para dispositivos móviles */
+@media (hover: none) {
+    .logout-btn {
+        padding: 16px 28px;
+        font-size: 1rem;
+    }
+
+    .logout-btn:active {
+        transform: scale(0.97);
+    }
+}
+
+/* Responsive para tablets */
+@media (max-width: 768px) {
+    .logout-btn {
+        top: 15px;
+        right: 15px;
+        padding: 12px 20px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Responsive para móviles */
+@media (max-width: 480px) {
+    .logout-btn {
+        top: 10px;
+        right: 10px;
+        padding: 10px 16px;
+        font-size: 0.85rem;
+    }
+
+    .logout-btn::after {
+        content: '✕';
+        margin-left: 0;
+    }
+
+    .logout-btn:hover::after {
+        transform: rotate(90deg);
+    }
+}
+

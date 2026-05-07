@@ -1,5 +1,5 @@
 ﻿:root {
-    /* Colores Base */
+    /* Colores Base - Variante para Médicos */
     --color-primary: #667eea;
     --color-primary-hover: #5568d3;
     --color-secondary: #764ba2;
@@ -21,9 +21,8 @@
     /* Gradientes de Tarjetas */
     --gradient-donantes: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     --gradient-pacientes: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --gradient-usuarios: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --gradient-asignaciones: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     --gradient-reportes: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-    --gradient-bitacora: linear-gradient(135deg, #43cea2 0%, #185a9d 100%);
     
     /* Espaciado */
     --spacing-xs: 8px;
@@ -108,13 +107,9 @@ body::before {
     }
 }
 
-.admin-container {
+.medico-container {
     position: relative;
     z-index: 1;
-}
-
-
-.admin-container {
     width: 90%;
     max-width: 1180px;
     margin: 30px auto;
@@ -136,7 +131,7 @@ body::before {
     }
 }
 
-.admin-header {
+.medico-header {
     margin-bottom: var(--spacing-xl);
     text-align: center;
     position: relative;
@@ -147,7 +142,7 @@ body::before {
     animation: slideInDown 0.6s ease-out;
 }
 
-.admin-title {
+.medico-title {
     font-size: 0;
     margin: 0 0 var(--spacing-sm) 0;
     letter-spacing: -0.5px;
@@ -236,7 +231,7 @@ body::before {
 }
 
 /* Línea decorativa bajo el encabezado */
-.admin-header::after {
+.medico-header::after {
     content: '';
     position: absolute;
     bottom: 0;
@@ -258,8 +253,7 @@ body::before {
     }
 }
 
-
-.admin-main {
+.medico-main {
     width: 100%;
 }
 
@@ -276,17 +270,6 @@ body::before {
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
     animation: slideInDown 0.5s ease-out;
     backdrop-filter: blur(10px);
-}
-
-@keyframes slideInDown {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 .welcome-icon {
@@ -329,7 +312,114 @@ body::before {
     line-height: 1.5;
 }
 
+/* Contenedor de Estadísticas */
+.stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-2xl);
+    animation: gridFadeIn 0.7s ease-out 0.15s both;
+}
 
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: #f8f9fa;
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--color-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: all var(--transition-normal);
+}
+
+.stat-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.stat-card--organs {
+    border-left-color: #667eea;
+}
+
+.stat-card--organs .stat-icon {
+    animation: iconFloat 3s ease-in-out infinite;
+}
+
+.stat-card--patients {
+    border-left-color: #f093fb;
+}
+
+.stat-card--donors {
+    border-left-color: #43cea2;
+}
+
+.stat-card--assignments {
+    border-left-color: #4facfe;
+}
+
+@keyframes iconFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-4px);
+    }
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-label {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    margin: var(--spacing-xs) 0 0 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.stat-value.loading::after {
+    content: '';
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    background: linear-gradient(90deg, transparent, currentColor, transparent);
+    animation: shimmer 1.5s infinite;
+    margin-left: 0.5em;
+}
+
+@keyframes shimmer {
+    0%, 100% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+.stat-subtitle {
+    margin: var(--spacing-xs) 0 0 0;
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+/* Grid de Menú */
 .menu-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -406,16 +496,8 @@ body::before {
     background: var(--gradient-pacientes);
 }
 
-.menu-card[data-section="usuarios"] {
-    background: var(--gradient-usuarios);
-}
-
-.menu-card[data-section="reportes"] {
-    background: var(--gradient-reportes);
-}
-
-.menu-card[data-section="bitacora"] {
-    background: var(--gradient-bitacora);
+.menu-card[data-section="asignaciones"] {
+    background: var(--gradient-asignaciones);
 }
 
 /* Hover Effects - Tarjetas Activas */
@@ -499,46 +581,15 @@ body::before {
     opacity: 0.95;
 }
 
-/* Badge Próximamente */
-.badge-comingsoon {
-    display: inline-block;
-    margin-top: var(--spacing-sm);
-    padding: var(--spacing-xs) calc(var(--spacing-sm) + 2px);
-    background: rgba(255, 255, 255, 0.25);
-    backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: all var(--transition-normal);
-}
-
-.menu-card--disabled:hover .badge-comingsoon {
-    background: rgba(255, 255, 255, 0.35);
-    border-color: rgba(255, 255, 255, 0.5);
-}
-
-/* Nota Bitácora */
-.bitacora-note {
-    display: block;
-    margin-top: var(--spacing-sm);
-    font-size: 0.85rem;
-    font-weight: 600;
-    opacity: 0.9;
-    line-height: 1.4;
-}
-
-
+/* Responsive */
 @media (max-width: 768px) {
-    .admin-container {
+    .medico-container {
         width: 94%;
         padding: var(--spacing-xl);
         margin: 20px auto;
     }
 
-    .admin-title {
+    .medico-title {
         font-size: 1.8rem;
     }
 
@@ -553,6 +604,10 @@ body::before {
 
     .welcome-subtitle {
         font-size: 0.9rem;
+    }
+
+    .stats-container {
+        grid-template-columns: repeat(2, 1fr);
     }
 
     .menu-grid {
@@ -582,21 +637,21 @@ body::before {
     }
 }
 
-
+/* Responsive para móviles */
 @media (max-width: 480px) {
-    .admin-container {
+    .medico-container {
         width: 96%;
-        padding: var(--spacing-lg);
         margin: 15px auto;
+        padding: var(--spacing-lg);
         border-radius: var(--radius-md);
     }
 
-    .admin-title {
+    .medico-title {
         font-size: 1.5rem;
         margin-bottom: var(--spacing-sm);
     }
 
-    .admin-header {
+    .medico-header {
         margin-bottom: var(--spacing-md);
     }
 
@@ -618,6 +673,15 @@ body::before {
 
     .welcome-subtitle {
         font-size: 0.85rem;
+    }
+
+    .stats-container {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+
+    .stat-card {
+        padding: var(--spacing-md);
     }
 
     .menu-grid {
@@ -645,210 +709,5 @@ body::before {
 
     .menu-card-description {
         font-size: 0.85rem;
-    }
-
-    .badge-comingsoon {
-        font-size: 0.7rem;
-        padding: var(--spacing-xs) var(--spacing-sm);
-    }
-}
-
-.menu-card:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-}
-
-/* Estado activo en navegación por teclado */
-.menu-card:focus-visible.menu-card--active {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: var(--shadow-card-hover), 0 0 0 3px rgba(102, 126, 234, 0.2);
-}
-
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.menu-card.loading .menu-icon {
-    animation: spin 1s linear infinite;
-}
-
-.stats-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-xl);
-    animation: gridFadeIn 0.7s ease-out 0.2s both;
-}
-
-.stat-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 245, 245, 0.95) 100%);
-    border-radius: var(--radius-md);
-    padding: var(--spacing-lg);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-lg);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transition: all var(--transition-normal);
-    border-left: 4px solid;
-    position: relative;
-    overflow: hidden;
-}
-
-/* Efecto de brillo sutil en las tarjetas de estadísticas */
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    animation: statShine 3s ease-in-out infinite;
-    pointer-events: none;
-}
-
-@keyframes statShine {
-    0%, 100% {
-        left: -100%;
-    }
-    50% {
-        left: 100%;
-    }
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
-}
-
-/* Colores únicos por tipo de estadística */
-.stat-card--organs {
-    border-left-color: #ef4444;
-}
-
-.stat-card--patients {
-    border-left-color: #3b82f6;
-}
-
-.stat-card--donors {
-    border-left-color: #ec4899;
-}
-
-.stat-card--hospitals {
-    border-left-color: #10b981;
-}
-
-.stat-icon {
-    font-size: 2.5rem;
-    line-height: 1;
-    flex-shrink: 0;
-    animation: iconBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.stat-card:hover .stat-icon {
-    animation: iconFloat 0.6s ease-in-out infinite;
-}
-
-.stat-content {
-    flex: 1;
-    position: relative;
-    z-index: 1;
-}
-
-.stat-label {
-    margin: 0;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 4px;
-}
-
-.stat-value {
-    margin: 0;
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    line-height: 1;
-    margin-bottom: 4px;
-}
-
-.stat-subtitle {
-    margin: 0;
-    font-size: 0.8rem;
-    color: var(--text-light);
-    font-weight: 400;
-}
-
-/* Animación de carga para las estadísticas */
-.stat-value.loading {
-    animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.6;
-    }
-}
-
-/* RESPONSIVE - TABLET */
-@media (max-width: 768px) {
-    .stats-container {
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--spacing-md);
-        margin-bottom: var(--spacing-lg);
-    }
-
-    .stat-card {
-        padding: var(--spacing-md);
-        gap: var(--spacing-md);
-    }
-
-    .stat-icon {
-        font-size: 2rem;
-    }
-
-    .stat-value {
-        font-size: 1.5rem;
-    }
-}
-
-/* RESPONSIVE - MÓVIL */
-@media (max-width: 480px) {
-    .stats-container {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-sm);
-        margin-bottom: var(--spacing-lg);
-    }
-
-    .stat-card {
-        padding: var(--spacing-md);
-        gap: var(--spacing-md);
-        flex-direction: row;
-    }
-
-    .stat-icon {
-        font-size: 1.75rem;
-    }
-
-    .stat-value {
-        font-size: 1.25rem;
-    }
-
-    .stat-label {
-        font-size: 0.75rem;
-    }
-
-    .stat-subtitle {
-        font-size: 0.75rem;
     }
 }
