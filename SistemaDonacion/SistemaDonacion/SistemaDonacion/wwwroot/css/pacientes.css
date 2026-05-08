@@ -1,0 +1,409 @@
+﻿/* Estilos generales */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+h1 {
+    color: #2c3e50;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.message {
+    background: #cfe2ff;
+    border-left: 4px solid #0d6efd;
+    color: #084298;
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+}
+
+    .message strong {
+        color: #0c5de4;
+    }
+
+p {
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0;
+}
+
+    ul li {
+        padding: 0.75rem 0;
+        padding-left: 1.5rem;
+        position: relative;
+        color: #555;
+    }
+
+        ul li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+/* Botón de cerrar sesión */
+.logout-btn {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    z-index: 9999;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+    .logout-btn:hover {
+        background: #b02a37;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+    }
+
+    .logout-btn:active {
+        transform: translateY(0);
+    }
+
+    .logout-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+    }
+
+/* Modal de confirmación */
+#logoutOverlay {
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-content {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-buttons button {
+    transition: all 0.2s ease;
+}
+
+    .modal-buttons button:hover {
+        transform: translateY(-1px);
+    }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 1.5rem;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    .logout-btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+        top: 1rem;
+        right: 1rem;
+    }
+}
+
+/* ==========================================================================
+   pacientes.css - RF-21 Mejorado
+   ========================================================================== */
+
+:root {
+    --primario: #667eea;
+    --primario-dark: #5568d3;
+    --gradiente: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --sombra: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Fondo general que viste en tus capturas */
+body {
+    margin: 0;
+    padding: 30px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--gradiente);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+}
+
+/* Contenedor principal estilo Tarjeta */
+.container {
+    background: white;
+    width: 95%;
+    max-width: 1180px;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: var(--sombra);
+    box-sizing: border-box;
+}
+
+/* Botón Volver */
+.btn-back {
+    display: inline-block;
+    text-decoration: none;
+    color: var(--primario);
+    font-weight: 600;
+    margin-bottom: 20px;
+    transition: transform 0.3s ease;
+}
+
+    .btn-back:hover {
+        transform: translateX(-5px);
+    }
+
+/* Sistema de Pestañas */
+.tabs {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.tab-btn {
+    padding: .75rem 1.5rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #666;
+    transition: 0.3s;
+}
+
+    .tab-btn.active {
+        color: var(--primario);
+        border-bottom-color: var(--primario);
+    }
+
+/* Formularios */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+label {
+    display: block;
+    margin-bottom: .5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: .75rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: .95rem;
+    box-sizing: border-box;
+    background-color: #fafafa;
+    transition: 0.3s ease;
+}
+
+    input:focus, select:focus {
+        outline: none;
+        border-color: var(--primario);
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        background-color: #fff;
+    }
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* Botones */
+.btn {
+    padding: .75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: .95rem;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.btn-primary {
+    background: var(--primario);
+    color: white;
+}
+
+    .btn-primary:hover {
+        background: var(--primario-dark);
+        transform: translateY(-2px);
+    }
+
+.btn-secondary {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.btn:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+/* Tabla Responsiva */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+}
+
+th {
+    background: #f5f5f5;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #ddd;
+}
+
+td {
+    padding: .75rem 1rem;
+    border-bottom: 1px solid #ddd;
+}
+
+tr:hover {
+    background: #fafafa;
+}
+
+/* Badges de Estado e Indicadores de Urgencia */
+.badge {
+    display: inline-block;
+    padding: .25rem .75rem;
+    border-radius: 12px;
+    font-size: .85rem;
+    font-weight: 600;
+}
+
+.badge-activo {
+    background: #d4edda;
+    color: #155724;
+}
+
+.badge-en-trasplante {
+    background: #cfe2ff;
+    color: #084298;
+}
+
+.badge-fallecido {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.urgencia-alta {
+    background: #dc3545;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: bold;
+}
+
+.urgencia-media {
+    background: #fd7e14;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: bold;
+}
+
+.urgencia-baja {
+    background: #28a745;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: bold;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+    .modal.active {
+        display: flex;
+    }
+
+.modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    min-width: 400px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
