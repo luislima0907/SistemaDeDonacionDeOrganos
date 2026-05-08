@@ -22,26 +22,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ============ FUNCIONES DE TAB ============
 function mostrarTab(tabName) {
-  // Ocultar todos los tabs
-  const tabs = document.querySelectorAll('.tab-content');
-  tabs.forEach(tab => tab.classList.remove('active'));
+    // Ocultar todos los tabs
+    const tabs = document.querySelectorAll('.tab-content');
+    tabs.forEach(tab => tab.classList.remove('active'));
 
-  // Ocultar todos los botones activos
-  const btns = document.querySelectorAll('.tab-btn');
-  btns.forEach(btn => btn.classList.remove('active'));
+    // Quitar clase active de todos los botones
+    const btns = document.querySelectorAll('.tab-btn');
+    btns.forEach(btn => btn.classList.remove('active'));
 
-  // Mostrar el tab seleccionado
-  document.getElementById(tabName).classList.add('active');
-  
-  // Marcar botón como activo
-  event.target.classList.add('active');
+    // Mostrar el tab seleccionado
+    document.getElementById(tabName).classList.add('active');
 
-  // Recargar datos si es necesario
-  if (tabName === 'listar-donantes') {
-    cargarDonantes();
-  } else if (tabName === 'listar-organos') {
-    cargarOrganos();
-  }
+    // Buscar el botón que corresponde al tab y activarlo
+    // Esto es mejor que usar event.target
+    const activeBtn = Array.from(btns).find(btn => btn.getAttribute('onclick').includes(tabName));
+    if (activeBtn) activeBtn.classList.add('active');
+
+    // Recargar datos
+    if (tabName === 'listar-donantes') cargarDonantes();
+    else if (tabName === 'listar-organos') cargarOrganos();
 }
 
 // ============ FUNCIONES DE MENSAJES ============
@@ -610,5 +609,37 @@ async function confirmarEliminacion() {
     console.error('Error en confirmarEliminacion:', error);
     mostrarMensaje('Error al eliminar elemento', 'error');
     cerrarModalConfirmacion();
-  }
+    }
+
+}
+
+// ============ FUNCIÓN DE NAVEGACIÓN 
+function regresarAlPanel() {
+    console.log("Intentando navegar de regreso...");
+
+    // Obtenemos el usuario del localStorage
+    const usuarioString = localStorage.getItem('usuario');
+
+    if (usuarioString) {
+        try {
+            const usuario = JSON.parse(usuarioString);
+
+            // Validamos el rol (Admin o Medico)
+            if (usuario.rol === 'Admin') {
+                window.location.href = 'admin.html';
+            } else if (usuario.rol === 'Medico') {
+                window.location.href = 'panel-medico.html';
+            } else {
+                // Si tiene otro rol, mandarlo al dashboard genérico
+                window.location.href = 'dashboard.html';
+            }
+        } catch (e) {
+            console.error("Error al leer la sesión:", e);
+            window.location.href = 'login.html';
+        }
+    } else {
+        // Si no hay nada en localStorage, mejor mandarlo al login
+        console.warn("No hay sesión, enviando al login");
+        window.location.href = 'login.html';
+    }
 }
