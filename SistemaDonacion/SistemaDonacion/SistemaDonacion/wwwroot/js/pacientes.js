@@ -1,234 +1,222 @@
+// ============ VARIABLES GLOBALES ============
 let pacientesData = [];
 let pacienteEditando = null;
 
+// ============ AL CARGAR EL DOCUMENTO ============
 document.addEventListener('DOMContentLoaded', () => {
-  cargarHospitalesPacientes();
-  cargarPacientes();
+    cargarHospitalesPacientes();
+    cargarPacientes();
 });
 
-function mostrarTab(tabName, event) {
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(tabName).classList.add('active');
-  event.target.classList.add('active');
-  if (tabName === 'listar-pacientes') cargarPacientes();
+// ============ NAVEGACIÓN Y TABS ============
+
+// Función para el botón "Volver" (RF-21)
+function regresarAlPanel() {
+    const usuarioStr = localStorage.getItem('usuario');
+    if (usuarioStr) {
+        const usuario = JSON.parse(usuarioStr);
+        if (usuario.rol === 'Admin') {
+            window.location.href = 'admin.html';
+        } else if (usuario.rol === 'Medico') {
+            window.location.href = 'panel-medico.html';
+        } else {
+            window.history.back();
+        }
+    } else {
+        window.history.back();
+    }
 }
 
-function mostrarMensaje(texto, tipo = 'info') {
-  const div = document.getElementById('message');
-  div.innerHTML = `<div class="alert alert-${tipo}">${texto}</div>`;
-  setTimeout(() => div.innerHTML = '', 5000);
+// Cambio de pestañas
+function mostrarTab(tabName, event) {
+    // Ocultar todos los contenidos
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    // Desactivar todos los botones
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+    // Activar lo seleccionado
+    document.getElementById(tabName).classList.add('active');
+    event.target.classList.add('active');
+
+    if (tabName === 'listar-pacientes') cargarPacientes();
 }
+
+// ============ FUNCIONES DE APOYO ============
+function mostrarMensaje(texto, tipo = 'info') {
+    const div = document.getElementById('message');
+    div.innerHTML = `<div class="alert alert-${tipo}">${texto}</div>`;
+    setTimeout(() => div.innerHTML = '', 5000);
+}
+
+// ============ LLAMADAS A LA API (BACKEND) ============
 
 async function cargarHospitalesPacientes() {
-  try {
-    // Primero intentar cargar el hospital del usuario autenticado
-    let res = await fetch('/api/hospital/mi-hospital', { credentials: 'include' });
-    
-    if (res.status === 403 || res.status === 400) {
-      // Si es administrador, cargar todos los hospitales
-      res = await fetch('/api/hospital', { credentials: 'include' });
-      if (!res.ok) throw new Error();
-      const hospitales = await res.json();
-      const select = document.getElementById('hospitalId');
-      select.innerHTML = '<option value="">Seleccionar hospital...</option>';
-      hospitales.forEach(h => {
-        const opt = document.createElement('option');
-        opt.value = h.id;
-        opt.textContent = `${h.nombre} (${h.ciudad})`;
-        select.appendChild(opt);
-      });
-    } else if (res.ok) {
-      // Cargar solo el hospital del usuario
-      const hospital = await res.json();
-      const select = document.getElementById('hospitalId');
-      select.innerHTML = '';
-      const opt = document.createElement('option');
-      opt.value = hospital.id;
-      opt.textContent = `${hospital.nombre} (${hospital.ciudad})`;
-      opt.selected = true;
-      select.appendChild(opt);
-      // Deshabilitar el select para que no puedan cambiar de hospital
-      select.disabled = true;
-    } else {
-      throw new Error();
+    try {
+        let res = await fetch('/api/hospital/mi-hospital', { credentials: 'include' });
+
+        if (res.status === 403 || res.status === 400) {
+            res = await fetch('/api/hospital', { credentials: 'include' });
+            const hospitales = await res.json();
+            const select = document.getElementById('hospitalId');
+            select.innerHTML = '<option value="">Seleccionar hospital...</option>';
+            hospitales.forEach(h => {
+                const opt = document.createElement('option');
+                opt.value = h.id;
+                opt.textContent = `${h.nombre} (${h.ciudad})`;
+                select.appendChild(opt);
+            });
+        } else if (res.ok) {
+            const hospital = await res.json();
+            const select = document.getElementById('hospitalId');
+            select.innerHTML = `<option value="${hospital.id}" selected>${hospital.nombre}</option>`;
+            select.disabled = true;
+        }
+    } catch (error) {
+        mostrarMensaje('Error al cargar hospitales', 'error');
     }
-  } catch {
-    mostrarMensaje('Error al cargar hospitales', 'error');
-    const select = document.getElementById('hospitalId');
-    select.innerHTML = '<option value="">Error al cargar hospitales</option>';
-  }
 }
 
 async function registrarPaciente(event) {
-  event.preventDefault();
+    event.preventDefault();
+    const btn = event.target.querySelector('button');
 
-  const nombre = document.getElementById('nombre').value.trim();
-  const tipoSanguineo = document.getElementById('tipoSanguineo').value;
-  const organoRequerido = document.getElementById('organoRequerido').value;
-  const nivelUrgencia = document.getElementById('nivelUrgencia').value;
-  const hospitalId = parseInt(document.getElementById('hospitalId').value);
-  const observaciones = document.getElementById('observaciones').value.trim();
+    // Evitar doble envío (Regla de Negocio)
+    if (btn.disabled) return;
 
-  if (!nombre || !tipoSanguineo || !organoRequerido || !nivelUrgencia || !hospitalId) {
-    mostrarMensaje('Debe completar todos los campos obligatorios', 'error');
-    return;
-  }
+    const nombre = document.getElementById('nombre').value.trim();
+    const tipoSanguineo = document.getElementById('tipoSanguineo').value;
+    const organoRequerido = document.getElementById('organoRequerido').value;
+    const nivelUrgencia = document.getElementById('nivelUrgencia').value;
+    const hospitalId = parseInt(document.getElementById('hospitalId').value);
+    const observaciones = document.getElementById('observaciones').value.trim();
 
-  const btn = event.target.querySelector('button');
-  btn.disabled = true;
-  btn.textContent = 'Registrando...';
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
 
-  try {
-    const res = await fetch('/api/paciente', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ nombre, tipoSanguineo, organoRequerido, nivelUrgencia, hospitalId, observaciones: observaciones || null })
-    });
+    try {
+        const res = await fetch('/api/paciente', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ nombre, tipoSanguineo, organoRequerido, nivelUrgencia, hospitalId, observaciones })
+        });
 
-    const data = await res.json();
-
-    if (res.ok) {
-      mostrarMensaje('✓ Paciente registrado correctamente', 'success');
-      document.getElementById('formPaciente').reset();
-      cargarPacientes();
-    } else {
-      mostrarMensaje(data.mensaje || 'No se pudo registrar el paciente, intente nuevamente', 'error');
+        if (res.ok) {
+            mostrarMensaje('✓ Paciente registrado correctamente', 'success');
+            document.getElementById('formPaciente').reset();
+            mostrarTab('listar-pacientes', { target: document.querySelectorAll('.tab-btn')[1] });
+        } else {
+            const data = await res.json();
+            mostrarMensaje(data.mensaje || 'Error al registrar', 'error');
+        }
+    } catch (error) {
+        mostrarMensaje('Error de conexión', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Registrar Paciente';
     }
-  } catch {
-    mostrarMensaje('No se pudo registrar el paciente, intente nuevamente', 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Registrar Paciente';
-  }
 }
 
 async function cargarPacientes() {
-  try {
-    const res = await fetch('/api/paciente', { credentials: 'include' });
-    if (!res.ok) throw new Error();
-    pacientesData = await res.json();
-    mostrarTablaPacientes();
-  } catch {
-    document.getElementById('pacientes-container').innerHTML =
-      '<div class="alert alert-error">Error al cargar pacientes</div>';
-  }
+    try {
+        const res = await fetch('/api/paciente', { credentials: 'include' });
+        pacientesData = await res.json();
+        renderizarTabla();
+    } catch (error) {
+        document.getElementById('pacientes-container').innerHTML = 'Error al cargar datos';
+    }
 }
 
-function mostrarTablaPacientes() {
-  const container = document.getElementById('pacientes-container');
+function renderizarTabla() {
+    const container = document.getElementById('pacientes-container');
+    if (pacientesData.length === 0) {
+        container.innerHTML = '<p>No hay pacientes en lista de espera.</p>';
+        return;
+    }
 
-  if (pacientesData.length === 0) {
-    container.innerHTML = '<p style="text-align:center;color:#999;">No hay pacientes registrados</p>';
-    return;
-  }
+    let html = `<table><thead><tr>
+        <th>ID</th><th>Nombre</th><th>Urgencia</th><th>Estado</th><th>Acciones</th>
+    </tr></thead><tbody>`;
 
-  let html = `
-    <table>
-      <thead>
+    pacientesData.forEach(p => {
+        const urgClass = p.nivelUrgencia.toLowerCase(); // alta, media, baja
+        html += `
         <tr>
-          <th>ID</th><th>Nombre</th><th>Tipo Sangre</th>
-          <th>Órgano Requerido</th><th>Urgencia</th>
-          <th>Hospital</th><th>Estado</th><th>Acciones</th>
-        </tr>
-      </thead><tbody>
-  `;
+            <td>#${p.id}</td>
+            <td>${p.nombre}</td>
+            <td><span class="urgencia-badge ${urgClass}">${p.nivelUrgencia}</span></td>
+            <td><span class="badge badge-${p.estado.toLowerCase().replace(' ', '-')}">${p.estado}</span></td>
+            <td><button class="btn btn-warning btn-sm" onclick="abrirModalEditar(${p.id})">Editar</button></td>
+        </tr>`;
+    });
 
-  pacientesData.forEach(p => {
-    const badgeClass = `badge-${p.estado.toLowerCase()}`;
-    const estadoClass = p.estado.toLowerCase().replace(/\s+/g, '-');
-    const badge = `<span class="badge badge-${estadoClass}">${p.estado}</span>`;
-    const urgenciaClass = `urgencia-${p.nivelUrgencia.toLowerCase()}`;
-    const hospital = p.hospital ? p.hospital.nombre : `Hospital #${p.hospitalId}`;
-    
-    // Desactivar edición para pacientes trasplantados o fallecidos (visual)
-    const isInactive = p.estado === 'Trasplantado' || p.estado === 'Fallecido';
-    const rowStyle = isInactive ? 'style="opacity:0.6;"' : '';
-
-    html += `
-      <tr ${rowStyle}>
-        <td>#${p.id}</td>
-        <td>${p.nombre}</td>
-        <td><strong>${p.tipoSanguineo}</strong></td>
-        <td>${p.organoRequerido}</td>
-        <td><span class="${urgenciaClass}">${p.nivelUrgencia}</span></td>
-        <td>${hospital}</td>
-        <td>${badge}</td>
-        <td>
-          <div class="action-buttons">
-            <button class="btn btn-warning btn-sm" onclick="abrirModalEditar(${p.id})">Editar</button>
-          </div>
-        </td>
-      </tr>
-    `;
-  });
-
-  html += '</tbody></table>';
-  container.innerHTML = html;
+    html += '</tbody></table>';
+    container.innerHTML = html;
 }
 
-function abrirModalEditar(pacienteId) {
-  const paciente = pacientesData.find(p => p.id === pacienteId);
-  if (!paciente) return;
-
-  pacienteEditando = paciente;
-  document.getElementById('modalNombre').textContent = paciente.nombre;
-  document.getElementById('modalEstado').value = paciente.estado;
-  document.getElementById('modalUrgencia').value = paciente.nivelUrgencia;
-
-  document.getElementById('modalEditar').classList.add('active');
+// ============ MODAL (EDICIÓN) ============
+function abrirModalEditar(id) {
+    pacienteEditando = pacientesData.find(p => p.id === id);
+    document.getElementById('modalNombre').textContent = pacienteEditando.nombre;
+    document.getElementById('modalEstado').value = pacienteEditando.estado;
+    document.getElementById('modalUrgencia').value = pacienteEditando.nivelUrgencia;
+    document.getElementById('modalEditar').classList.add('active');
 }
 
 function cerrarModal() {
-  document.getElementById('modalEditar').classList.remove('active');
-  pacienteEditando = null;
+    document.getElementById('modalEditar').classList.remove('active');
 }
 
 async function guardarCambios() {
-  if (!pacienteEditando) return;
+    const estado = document.getElementById('modalEstado').value;
+    const nivelUrgencia = document.getElementById('modalUrgencia').value;
 
-  const estado = document.getElementById('modalEstado').value.trim();
-  const nivelUrgencia = document.getElementById('modalUrgencia').value.trim();
+    try {
+        const res = await fetch(`/api/paciente/${pacienteEditando.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ estado, nivelUrgencia })
+        });
 
-  if (!estado || !nivelUrgencia) {
-    mostrarMensaje('Debe seleccionar estado y urgencia', 'error');
-    return;
-  }
-
-  const btn = document.getElementById('btnGuardar');
-  btn.disabled = true;
-  btn.textContent = 'Guardando...';
-
-  try {
-    const res = await fetch(`/api/paciente/${pacienteEditando.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ estado, nivelUrgencia })
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      mostrarMensaje('✓ Paciente actualizado correctamente', 'success');
-      cerrarModal();
-      cargarPacientes();
-    } else {
-      mostrarMensaje(data.mensaje || 'No se pudo actualizar el paciente, intente nuevamente', 'error');
+        if (res.ok) {
+            cerrarModal();
+            cargarPacientes();
+            mostrarMensaje('Actualizado correctamente', 'success');
+        }
+    } catch (error) {
+        mostrarMensaje('Error al actualizar', 'error');
     }
-  } catch {
-    mostrarMensaje('No se pudo actualizar el paciente, intente nuevamente', 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Guardar';
-  }
 }
 
-// Cerrar modal al hacer click fuera
-document.addEventListener('click', (e) => {
-  const modal = document.getElementById('modalEditar');
-  if (e.target === modal) {
-    cerrarModal();
-  }
-});
+
+// ============ FUNCIÓN DE NAVEGACIÓN 
+function regresarAlPanel() {
+    console.log("Intentando navegar de regreso...");
+
+    // Obtenemos el usuario del localStorage
+    const usuarioString = localStorage.getItem('usuario');
+
+    if (usuarioString) {
+        try {
+            const usuario = JSON.parse(usuarioString);
+
+            // Validamos el rol (Admin o Medico)
+            if (usuario.rol === 'Admin') {
+                window.location.href = 'admin.html';
+            } else if (usuario.rol === 'Medico') {
+                window.location.href = 'panel-medico.html';
+            } else {
+                // Si tiene otro rol, mandarlo al dashboard genérico
+                window.location.href = 'dashboard.html';
+            }
+        } catch (e) {
+            console.error("Error al leer la sesión:", e);
+            window.location.href = 'login.html';
+        }
+    } else {
+        // Si no hay nada en localStorage, mejor mandarlo al login
+        console.warn("No hay sesión, enviando al login");
+        window.location.href = 'login.html';
+    }
+}
