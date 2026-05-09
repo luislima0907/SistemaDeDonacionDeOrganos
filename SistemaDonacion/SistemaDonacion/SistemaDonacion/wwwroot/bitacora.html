@@ -3,280 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auditoría del Sistema - Sistema de Donación de Órganos</title>
+    <title>Bitácora de Auditoría - Sistema de Donación de Órganos</title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="css/dashboard.css" rel="stylesheet">
-    <style>
-        .bitacora-container {
-            padding: 20px;
-            background-color: #f8f9fa;
-        }
-
-        .filter-section {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .integrity-alert {
-            border-left: 5px solid #0dcaf0;
-            border-radius: 8px;
-            background-color: #e7f8fc;
-            color: #055160;
-            padding: 14px 18px;
-            margin-top: 15px;
-            margin-bottom: 20px;
-        }
-
-            .integrity-alert strong {
-                display: block;
-                margin-bottom: 4px;
-            }
-
-        .stats-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .stat-card {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            border-left: 4px solid #007bff;
-        }
-
-            .stat-card.create {
-                border-left-color: #28a745;
-            }
-
-            .stat-card.update {
-                border-left-color: #ffc107;
-            }
-
-            .stat-card.delete {
-                border-left-color: #dc3545;
-            }
-
-            .stat-card h5 {
-                margin: 0 0 10px 0;
-                color: #666;
-                font-size: 0.9rem;
-                font-weight: 600;
-                text-transform: uppercase;
-            }
-
-            .stat-card .number {
-                font-size: 2rem;
-                font-weight: bold;
-                color: #333;
-            }
-
-        .bitacora-table {
-            background-color: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-            .bitacora-table table {
-                margin-bottom: 0;
-            }
-
-            .bitacora-table thead {
-                background-color: #f8f9fa;
-                border-bottom: 2px solid #dee2e6;
-            }
-
-            .bitacora-table th {
-                padding: 15px;
-                font-weight: 600;
-                color: #333;
-                white-space: nowrap;
-            }
-
-            .bitacora-table td {
-                padding: 12px 15px;
-                vertical-align: middle;
-                border-bottom: 1px solid #dee2e6;
-            }
-
-        .action-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-            .action-badge.create {
-                background-color: #d4edda;
-                color: #155724;
-            }
-
-            .action-badge.update {
-                background-color: #fff3cd;
-                color: #856404;
-            }
-
-            .action-badge.delete {
-                background-color: #f8d7da;
-                color: #721c24;
-            }
-
-            .action-badge.consulta {
-                background-color: #d1ecf1;
-                color: #0c5460;
-            }
-
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        .pagination-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 20px;
-            padding: 15px;
-            background-color: white;
-            border-radius: 8px;
-        }
-
-        .details-btn {
-            padding: 4px 8px;
-            font-size: 0.85rem;
-            cursor: pointer;
-        }
-
-        .modal-content {
-            border-radius: 8px;
-        }
-
-        .modal-header {
-            background-color: #f8f9fa;
-            border-bottom: 2px solid #dee2e6;
-        }
-
-        .detail-row {
-            display: grid;
-            grid-template-columns: 150px 1fr;
-            gap: 10px;
-            padding: 10px 0;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-            .detail-row:last-child {
-                border-bottom: none;
-            }
-
-        .detail-label {
-            font-weight: 600;
-            color: #666;
-            word-break: break-word;
-        }
-
-        .detail-value {
-            color: #333;
-            word-break: break-all;
-            font-family: monospace;
-            font-size: 0.9rem;
-            background-color: #f8f9fa;
-            padding: 8px;
-            border-radius: 4px;
-            white-space: pre-wrap;
-        }
-
-        .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 300px;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-
-            .empty-state i {
-                font-size: 3rem;
-                margin-bottom: 20px;
-                opacity: 0.5;
-            }
-
-        .filter-form {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            align-items: end;
-        }
-
-        .date-range {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            grid-column: span 2;
-        }
-
-        .filter-buttons {
-            display: flex;
-            gap: 10px;
-            align-items: end;
-            flex-wrap: wrap;
-        }
-
-        .badge-info {
-            background-color: #e7f3ff;
-            color: #004085;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-        }
-
-        .nav-tabs .nav-link {
-            color: #666;
-            border: none;
-            border-bottom: 2px solid transparent;
-            cursor: pointer;
-        }
-
-            .nav-tabs .nav-link.active {
-                color: #007bff;
-                border-bottom-color: #007bff;
-                background-color: transparent;
-            }
-
-        .tab-content {
-            border-top: 2px solid #dee2e6;
-            padding-top: 20px;
-        }
-    </style>
+    <link href="css/bitacora.css" rel="stylesheet">
 </head>
+
 <body>
     <div class="container-fluid bitacora-container">
-        <!-- Encabezado -->
-        <div class="mb-4">
-            <h1 class="mb-2">📋 Auditoría del Sistema</h1>
-            <p class="text-muted">Registro detallado de todas las acciones realizadas en el sistema</p>
+
+        <!-- Encabezado principal -->
+        <header class="bitacora-header mb-4" aria-label="Encabezado de bitácora de auditoría">
+            <div class="header-content">
+                <div>
+                    <h1 class="mb-2">📋 Bitácora de Auditoría</h1>
+                    <p class="text-muted">
+                        Visualización clara de las acciones realizadas dentro del sistema
+                    </p>
+                </div>
+
+                <button type="button" id="backMenuButton" class="btn btn-primary back-menu-btn">
+                    Volver al menú
+                </button>
+            </div>
 
             <div class="integrity-alert" role="alert">
-                <strong>Bitácora protegida e inmutable</strong>
-                Esta sección es únicamente informativa. Los registros de auditoría no pueden editarse ni eliminarse, con el fin de garantizar la integridad, trazabilidad y seguridad de la información del sistema.
+                <strong>🔒 Registros protegidos contra edición y eliminación</strong>
+                Solo lectura
             </div>
-        </div>
+        </header>
 
-        <!-- Sección de filtros -->
-        <div class="filter-section">
+        <!-- Sección de filtros avanzados -->
+        <section class="filter-section" aria-label="Filtros avanzados de bitácora">
             <form id="filterForm" class="filter-form">
+
                 <div>
-                    <label class="form-label">Período</label>
-                    <select id="filterDias" class="form-select">
+                    <label for="filterDias" class="form-label">Período</label>
+                    <select id="filterDias" class="form-select" data-filter="periodo">
                         <option value="7">Últimos 7 días</option>
                         <option value="30" selected>Últimos 30 días</option>
                         <option value="90">Últimos 90 días</option>
@@ -287,110 +51,166 @@
 
                 <div class="date-range" id="customDateRange" style="display:none;">
                     <div>
-                        <label class="form-label">Fecha inicio</label>
-                        <input type="date" id="filterFechaInicio" class="form-control" />
+                        <label for="filterFechaInicio" class="form-label">Fecha inicio</label>
+                        <input type="date" id="filterFechaInicio" class="form-control" data-filter="fechaInicio">
                     </div>
+
                     <div>
-                        <label class="form-label">Fecha fin</label>
-                        <input type="date" id="filterFechaFin" class="form-control" />
+                        <label for="filterFechaFin" class="form-label">Fecha fin</label>
+                        <input type="date" id="filterFechaFin" class="form-control" data-filter="fechaFin">
                     </div>
                 </div>
 
                 <div>
-                    <label class="form-label">Tabla</label>
-                    <select id="filterTabla" class="form-select">
-                        <option value="">-- Todas las tablas --</option>
+                    <label for="filterTabla" class="form-label">Entidad afectada</label>
+                    <select id="filterTabla" class="form-select" data-filter="tabla">
+                        <option value="">-- Todas las entidades --</option>
                     </select>
                 </div>
 
                 <div>
-                    <label class="form-label">Acción</label>
-                    <select id="filterAccion" class="form-select">
+                    <label for="filterAccion" class="form-label">Tipo de acción</label>
+                    <select id="filterAccion" class="form-select" data-filter="accion">
                         <option value="">-- Todas las acciones --</option>
                     </select>
                 </div>
 
-                <div class="filter-buttons">
-                    <button type="button" id="applyFilters" class="btn btn-primary">Aplicar filtros</button>
-                    <button type="button" id="clearFilters" class="btn btn-secondary">Limpiar</button>
+                <div>
+                    <label for="filterBusqueda" class="form-label">Buscar por ID o usuario</label>
+                    <input type="text" id="filterBusqueda" class="form-control" placeholder="Ej. 1, admin, usuario" data-filter="busqueda">
                 </div>
-            </form>
-        </div>
 
-        <!-- Pestaña de Bitácora y Resumen -->
-        <ul class="nav nav-tabs mb-4" id="bitacoraTab" role="tablist">
+                <div class="filter-buttons">
+                    <button type="button" id="applyFilters" class="btn btn-primary">
+                        Aplicar filtros
+                    </button>
+
+                    <button type="button" id="clearFilters" class="btn btn-secondary">
+                        Limpiar filtros
+                    </button>
+                </div>
+
+            </form>
+        </section>
+
+        <!-- Pestañas de navegación -->
+        <ul class="nav nav-tabs mb-4" id="bitacoraTab" role="tablist" aria-label="Navegación del módulo de bitácora">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="bitacora-tab" data-bs-toggle="tab" data-bs-target="#bitacora-content" type="button">
+                <button class="nav-link active"
+                        id="bitacora-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#bitacora-content"
+                        type="button"
+                        role="tab">
                     📝 Bitácora Detallada
                 </button>
             </li>
+
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="resumen-tab" data-bs-toggle="tab" data-bs-target="#resumen-content" type="button">
+                <button class="nav-link"
+                        id="resumen-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#resumen-content"
+                        type="button"
+                        role="tab">
                     📊 Resumen Estadístico
                 </button>
             </li>
         </ul>
 
-        <!-- Contenido de Bitácora -->
-        <div class="tab-content" id="bitacoraContent">
-            <div class="tab-pane fade show active" id="bitacora-content" role="tabpanel">
-                <!-- Tarjetas de Estadísticas -->
-                <div class="stats-cards" id="statsContainer">
+        <!-- Contenido principal -->
+        <main class="tab-content" id="bitacoraContent">
+
+            <!-- Contenido de bitácora detallada -->
+            <section class="tab-pane fade show active"
+                     id="bitacora-content"
+                     role="tabpanel"
+                     aria-labelledby="bitacora-tab">
+
+                <!-- Tarjetas de estadísticas -->
+                <div class="stats-cards" id="statsContainer" aria-label="Tarjetas de estadísticas de acciones">
+
                     <div class="stat-card create">
-                        <h5>Registros Registrados</h5>
+                        <h5>Crear</h5>
                         <div class="number" id="statRegistrar">-</div>
                     </div>
+
                     <div class="stat-card update">
-                        <h5>Registros Actualizados</h5>
+                        <h5>Actualizar</h5>
                         <div class="number" id="statActualizar">-</div>
                     </div>
+
                     <div class="stat-card delete">
-                        <h5>Registros Eliminados</h5>
+                        <h5>Eliminar</h5>
                         <div class="number" id="statEliminar">-</div>
                     </div>
-                    <div class="stat-card">
-                        <h5>Total de Acciones</h5>
-                        <div class="number" id="statTotal">-</div>
+
+                    <div class="stat-card consulta">
+                        <h5>Consulta</h5>
+                        <div class="number" id="statConsulta">-</div>
                     </div>
+
                 </div>
 
-                <!-- Tabla de Bitácora -->
-                <div class="bitacora-table">
+                <!-- Tabla de bitácora -->
+                <section class="bitacora-table" aria-label="Tabla de registros de auditoría">
+
                     <div id="bitacoraLoading" class="loading d-none">
                         <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Cargando...</span>
+                            <span class="visually-hidden">Cargando registros...</span>
                         </div>
                     </div>
+
                     <div id="bitacoraTableContent" class="table-responsive">
-                        <!-- Se poblará dinámicamente -->
+                        <!-- La tabla se cargará dinámicamente desde bitacora.js -->
                     </div>
+
                     <div id="emptyState" class="empty-state d-none">
-                        <i class="fas fa-inbox"></i>
+                        <div class="empty-icon">ℹ️</div>
                         <h5>No hay registros de auditoría</h5>
-                        <p>No se encontraron registros en el sistema</p>
+                        <p>Los registros aparecerán aquí cuando haya actividad en el sistema</p>
                     </div>
-                </div>
+
+                </section>
 
                 <!-- Paginación -->
-                <div class="pagination-container d-none" id="paginationContainer">
+                <div class="pagination-container d-none" id="paginationContainer" aria-label="Paginación de registros">
+
                     <div>
                         <span id="paginationInfo"></span>
                     </div>
-                    <nav>
-                        <ul class="pagination mb-0">
-                            <li class="page-item">
-                                <a class="page-link" href="#" onclick="paginaAnterior()">Anterior</a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="#" onclick="paginaSiguiente()">Siguiente</a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
-            </div>
 
-            <!-- Contenido de Resumen -->
-            <div class="tab-pane fade" id="resumen-content" role="tabpanel">
+                    <div class="pagination-actions">
+
+                        <select id="pageSizeSelect" class="form-select form-select-sm" aria-label="Cantidad de registros por página">
+                            <option value="10">10 por página</option>
+                            <option value="25" selected>25 por página</option>
+                            <option value="50">50 por página</option>
+                        </select>
+
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="paginaAnterior()">
+                            Anterior
+                        </button>
+
+                        <span class="page-current" id="paginaActualTexto">
+                            Página 1
+                        </span>
+
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="paginaSiguiente()">
+                            Siguiente
+                        </button>
+
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Contenido de resumen estadístico -->
+            <section class="tab-pane fade"
+                     id="resumen-content"
+                     role="tabpanel"
+                     aria-labelledby="resumen-tab">
+
                 <div id="resumenContainer">
                     <div class="loading">
                         <div class="spinner-border text-primary" role="status">
@@ -398,28 +218,54 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+
+            </section>
+
+        </main>
     </div>
 
     <!-- Modal para detalles de bitácora -->
-    <div class="modal fade" id="detallesModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+    <div class="modal fade"
+         id="detallesModal"
+         tabindex="-1"
+         aria-labelledby="detallesModalLabel"
+         aria-hidden="true">
+
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
+
                 <div class="modal-header">
-                    <h5 class="modal-title">Detalles de la Auditoría</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="detallesModalLabel">
+                        Detalles de la Auditoría
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
                 </div>
+
                 <div class="modal-body" id="modalBody">
-                    <!-- Se poblará dinámicamente -->
+                    <!-- Los detalles se cargarán dinámicamente desde bitacora.js -->
                 </div>
+
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cerrar
+                    </button>
                 </div>
+
             </div>
         </div>
     </div>
 
+    <!-- Botón fijo para cerrar sesión -->
+    <button type="button" id="logoutButton" class="btn btn-danger logout-fixed">
+        Cerrar sesión
+    </button>
+
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://kit.fontawesome.com/a076d05399.js"></script>
     <script src="js/bitacora.js"></script>

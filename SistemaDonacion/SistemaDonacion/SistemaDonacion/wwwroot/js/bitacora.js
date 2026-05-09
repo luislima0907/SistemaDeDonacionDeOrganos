@@ -1,22 +1,30 @@
 ﻿let bitacorasActuales = [];
+let bitacorasFiltradas = [];
 let paginaActual = 1;
-const registrosPorPagina = 10;
+let registrosPorPagina = 25;
 let totalPaginasBackend = 1;
 let usingBackendPagination = false;
+let debounceTimer = null;
 
 // Cargar bitácoras al abrir la página
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     cargarOpcionesDisponibles();
     conectarFiltros();
+    conectarPageSize();
+    conectarCerrarSesion();
+    conectarVolverMenu();
     cargarBitacoras();
-    
-    // Cargar resumen cuando se hace clic en la pestaña
-    document.getElementById('resumen-tab').addEventListener('click', function() {
-        cargarResumen();
-    });
+
+    const resumenTab = document.getElementById('resumen-tab');
+
+    if (resumenTab) {
+        resumenTab.addEventListener('click', function () {
+            cargarResumen();
+        });
+    }
 });
 
-// Función para cargar las opciones disponibles de tablas y acciones
+// Cargar opciones disponibles para filtros
 async function cargarOpcionesDisponibles() {
     try {
         const response = await fetch('/api/bitacora/opciones', {
@@ -36,8 +44,9 @@ async function cargarOpcionesDisponibles() {
         const tablas = resultado.tablas || [];
         const acciones = resultado.acciones || [];
 
-        // Poblar selector de tablas
         const selectTabla = document.getElementById('filterTabla');
+        const selectAccion = document.getElementById('filterAccion');
+
         tablas.forEach(tabla => {
             const option = document.createElement('option');
             option.value = tabla;
@@ -45,8 +54,6 @@ async function cargarOpcionesDisponibles() {
             selectTabla.appendChild(option);
         });
 
-        // Poblar selector de acciones
-        const selectAccion = document.getElementById('filterAccion');
         acciones.forEach(accion => {
             const option = document.createElement('option');
             option.value = accion;
@@ -59,13 +66,15 @@ async function cargarOpcionesDisponibles() {
     }
 }
 
+// Conectar filtros
 function conectarFiltros() {
     const diasSelect = document.getElementById('filterDias');
     const customRange = document.getElementById('customDateRange');
     const applyBtn = document.getElementById('applyFilters');
     const clearBtn = document.getElementById('clearFilters');
+    const busquedaInput = document.getElementById('filterBusqueda');
 
-    diasSelect.addEventListener('change', function() {
+    diasSelect.addEventListener('change', function () {
         if (this.value === 'custom') {
             customRange.style.display = 'grid';
         } else {
@@ -73,16 +82,66 @@ function conectarFiltros() {
         }
     });
 
-    applyBtn.addEventListener('click', function() {
+    applyBtn.addEventListener('click', function () {
         aplicarFiltros();
     });
 
-    clearBtn.addEventListener('click', function() {
+    clearBtn.addEventListener('click', function () {
         limpiarFiltros();
+    });
+
+    if (busquedaInput) {
+        busquedaInput.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+
+            debounceTimer = setTimeout(() => {
+                paginaActual = 1;
+                filtrarBusquedaLocal();
+                mostrarTabla();
+                actualizarEstadisticas();
+            }, 500);
+        });
+    }
+}
+
+// Conectar selector de registros por página
+function conectarPageSize() {
+    const pageSizeSelect = document.getElementById('pageSizeSelect');
+
+    if (!pageSizeSelect) return;
+
+    pageSizeSelect.addEventListener('change', function () {
+        registrosPorPagina = parseInt(this.value);
+        paginaActual = 1;
+        mostrarTabla();
     });
 }
 
-// Función para cargar bitácoras
+// Botón fijo de cerrar sesión
+function conectarCerrarSesion() {
+    const logoutButton = document.getElementById('logoutButton');
+
+    if (!logoutButton) return;
+
+    logoutButton.addEventListener('click', function () {
+        localStorage.removeItem('token');
+        sessionStorage.clear();
+        window.location.href = 'login.html';
+    });
+}
+
+// Botón superior para volver al menú
+function conectarVolverMenu() {
+    const backMenuButton = document.getElementById('backMenuButton');
+
+    if (!backMenuButton) return;
+
+    backMenuButton.addEventListener('click', function () {
+        window.location.href = 'admin.html';
+    });
+}
+
+// Cargar bitácoras
 async function cargarBitacoras(pagina = 1) {
     const loadingDiv = document.getElementById('bitacoraLoading');
     const contentDiv = document.getElementById('bitacoraTableContent');
@@ -102,27 +161,28 @@ async function cargarBitacoras(pagina = 1) {
         usingBackendPagination = false;
 
         if (diasVal === 'custom') {
-            // Usar endpoint filtrada con fechas concretas
             const fechaInicio = document.getElementById('filterFechaInicio')?.value;
             const fechaFin = document.getElementById('filterFechaFin')?.value;
 
-            // Validaciones básicas
             if (!fechaInicio || !fechaFin) {
                 alert('Por favor seleccione fecha inicio y fecha fin para el rango personalizado.');
+                loadingDiv.classList.add('d-none');
                 return;
             }
 
-            // Construir query para /api/bitacora/filtrada
             url = `/api/bitacora/filtrada?fechaInicio=${encodeURIComponent(fechaInicio)}&fechaFin=${encodeURIComponent(fechaFin)}&pagina=${pagina}&pageSize=${registrosPorPagina}`;
+
             if (tablaVal) url += `&tabla=${encodeURIComponent(tablaVal)}`;
             if (accionVal) url += `&accion=${encodeURIComponent(accionVal)}`;
+
             usingBackendPagination = true;
         } else {
-            // Usar endpoint todas con dias
             url = `/api/bitacora/todas?dias=${encodeURIComponent(diasVal)}`;
+
             if (tablaVal) url += `&tabla=${encodeURIComponent(tablaVal)}`;
             if (accionVal) url += `&accion=${encodeURIComponent(accionVal)}`;
-            usingBackendPagination = false; // client-side pagination
+
+            usingBackendPagination = false;
         }
 
         const response = await fetch(url, {
@@ -141,153 +201,173 @@ async function cargarBitacoras(pagina = 1) {
 
         if (usingBackendPagination) {
             bitacorasActuales = resultado.data || [];
-            // Backend nos da info de paginado
             totalPaginasBackend = resultado.totalPaginas || 1;
             paginaActual = resultado.pagina || 1;
-
-            // Actualizar estadísticas usando conteos devueltos
-            document.getElementById('statRegistrar').textContent = resultado.totalRegistrar ?? '-';
-            document.getElementById('statActualizar').textContent = resultado.totalActualizar ?? '-';
-            document.getElementById('statEliminar').textContent = resultado.totalEliminar ?? '-';
-            document.getElementById('statTotal').textContent = resultado.total ?? bitacorasActuales.length;
         } else {
-            // Cuando usamos /todas devolvemos lista completa -> paginar en cliente
             bitacorasActuales = resultado.data || [];
-            
-            // Actualizar estadísticas usando conteos devueltos del backend
-            document.getElementById('statRegistrar').textContent = resultado.totalRegistrar ?? '-';
-            document.getElementById('statActualizar').textContent = resultado.totalActualizar ?? '-';
-            document.getElementById('statEliminar').textContent = resultado.totalEliminar ?? '-';
-            document.getElementById('statTotal').textContent = resultado.total ?? bitacorasActuales.length;
         }
 
-        // Mostrar tabla
+        bitacorasFiltradas = [...bitacorasActuales];
+        filtrarBusquedaLocal();
         mostrarTabla();
+        actualizarEstadisticas();
 
-        if (bitacorasActuales.length === 0) {
+        if (bitacorasFiltradas.length === 0) {
             emptyState.classList.remove('d-none');
             contentDiv.innerHTML = '';
+            document.getElementById('paginationContainer').classList.add('d-none');
         }
 
     } catch (error) {
         console.error('Error al cargar bitácoras:', error);
-        const errorDiv = document.getElementById('bitacoraTableContent');
-        if (errorDiv) {
-            errorDiv.innerHTML = `
-                <div class="alert alert-danger m-3" role="alert">
-                    <strong>Error:</strong> No se pudieron cargar los registros de auditoría. ${error.message}
-                </div>
-            `;
-        }
+
+        contentDiv.innerHTML = `
+            <div class="alert alert-danger m-3" role="alert">
+                <strong>Error:</strong> No se pudieron cargar los registros de auditoría. ${error.message}
+            </div>
+        `;
     } finally {
         loadingDiv.classList.add('d-none');
     }
 }
 
+// Búsqueda local por ID o usuario
+function filtrarBusquedaLocal() {
+    const busqueda = document.getElementById('filterBusqueda')?.value?.trim().toLowerCase() || '';
+
+    if (!busqueda) {
+        bitacorasFiltradas = [...bitacorasActuales];
+        return;
+    }
+
+    bitacorasFiltradas = bitacorasActuales.filter(b => {
+        const id = (b.id || b.Id || '').toString().toLowerCase();
+        const registroId = (b.registroId || b.RegistroId || '').toString().toLowerCase();
+        const usuario = (b.usuario?.nombre || b.NombreUsuario || 'Sistema').toString().toLowerCase();
+
+        return id.includes(busqueda) ||
+            registroId.includes(busqueda) ||
+            usuario.includes(busqueda);
+    });
+}
+
 // Actualizar estadísticas
 function actualizarEstadisticas() {
-    // Debug: ver qué acciones existen en los datos
-    const accionesUnicas = [...new Set(bitacorasActuales.map(b => b.accion || b.Accion))];
-    console.log('Acciones encontradas en la BD:', accionesUnicas);
-    console.log('Total de registros:', bitacorasActuales.length);
-    console.log('Datos completos:', bitacorasActuales);
-
-    // Contar con búsqueda insensible a mayúsculas y espacios
-    const crear = bitacorasActuales.filter(b => {
+    const crear = bitacorasFiltradas.filter(b => {
         const accion = (b.accion || b.Accion || '').toString().toLowerCase();
         return accion.includes('crear') || accion.includes('registrar');
     }).length;
-    
-    const actualizar = bitacorasActuales.filter(b => {
+
+    const actualizar = bitacorasFiltradas.filter(b => {
         const accion = (b.accion || b.Accion || '').toString().toLowerCase();
         return accion.includes('actualizar');
     }).length;
-    
-    const eliminar = bitacorasActuales.filter(b => {
+
+    const eliminar = bitacorasFiltradas.filter(b => {
         const accion = (b.accion || b.Accion || '').toString().toLowerCase();
         return accion.includes('eliminar');
     }).length;
-    
-    const total = bitacorasActuales.length;
 
-    console.log('Estadísticas calculadas:', { crear, actualizar, eliminar, total });
+    const consulta = bitacorasFiltradas.filter(b => {
+        const accion = (b.accion || b.Accion || '').toString().toLowerCase();
+        return accion.includes('consulta') || accion.includes('consultar');
+    }).length;
 
-    const statCrear = document.getElementById('statRegistrar');
-    const statActualizar = document.getElementById('statActualizar');
-    const statEliminar = document.getElementById('statEliminar');
-    const statTotal = document.getElementById('statTotal');
-
-    if (statCrear) statCrear.textContent = crear;
-    if (statActualizar) statActualizar.textContent = actualizar;
-    if (statEliminar) statEliminar.textContent = eliminar;
-    if (statTotal) statTotal.textContent = total;
+    document.getElementById('statRegistrar').textContent = crear;
+    document.getElementById('statActualizar').textContent = actualizar;
+    document.getElementById('statEliminar').textContent = eliminar;
+    document.getElementById('statConsulta').textContent = consulta;
 }
 
 // Mostrar tabla con paginación
 function mostrarTabla() {
     const contentDiv = document.getElementById('bitacoraTableContent');
+    const emptyState = document.getElementById('emptyState');
 
-    // Si backend maneja paginado, mostramos lo que vino
+    if (bitacorasFiltradas.length === 0) {
+        contentDiv.innerHTML = '';
+        emptyState.classList.remove('d-none');
+        document.getElementById('paginationContainer').classList.add('d-none');
+        return;
+    }
+
+    emptyState.classList.add('d-none');
+
     if (usingBackendPagination) {
-        renderTabla(bitacorasActuales);
+        renderTabla(bitacorasFiltradas);
         actualizarPaginacionBackend();
         return;
     }
 
-    // Paginación cliente
     const inicio = (paginaActual - 1) * registrosPorPagina;
     const fin = inicio + registrosPorPagina;
-    const bitacorasPagina = bitacorasActuales.slice(inicio, fin);
-
-    if (bitacorasPagina.length === 0) {
-        contentDiv.innerHTML = '';
-        return;
-    }
+    const bitacorasPagina = bitacorasFiltradas.slice(inicio, fin);
 
     renderTabla(bitacorasPagina);
-    // Mostrar paginación si hay más registros
     actualizarPaginacion();
 }
 
+// Renderizar tabla
 function renderTabla(bitacorasLista) {
     const contentDiv = document.getElementById('bitacoraTableContent');
+
     let html = `
         <table class="table table-hover mb-0">
             <thead>
                 <tr>
-                    <th>Fecha/Hora</th>
+                    <th>ID</th>
                     <th>Usuario</th>
                     <th>Acción</th>
-                    <th>Tabla</th>
-                    <th>Registro ID</th>
+                    <th>Entidad</th>
+                    <th>Fecha y hora</th>
+                    <th>Descripción</th>
+                    <th>Detalles</th>
                 </tr>
             </thead>
             <tbody>
     `;
 
     bitacorasLista.forEach(bitacora => {
-        const fecha = new Date(bitacora.fechaAccion || bitacora.FechaAccion).toLocaleString('es-ES');
-        const accionClass = obtenerClaseAccion(bitacora.accion || bitacora.Accion);
-        const usuario = (bitacora.usuario?.nombre) || bitacora.NombreUsuario || 'Sistema';
-        const rol = (bitacora.usuario?.rol) || bitacora.RolUsuario || '';
+        const id = bitacora.id || bitacora.Id || '';
+        const fecha = formatearFechaLocal(bitacora.fechaAccion || bitacora.FechaAccion);
+        const accion = bitacora.accion || bitacora.Accion || 'Consulta';
+        const accionClass = obtenerClaseAccion(accion);
+        const usuario = bitacora.usuario?.nombre || bitacora.NombreUsuario || 'Sistema';
+        const rol = bitacora.usuario?.rol || bitacora.RolUsuario || '';
+        const tabla = bitacora.tabla || bitacora.Tabla || 'Sin entidad';
+        const registroId = bitacora.registroId || bitacora.RegistroId || '';
+        const descripcion = bitacora.detalles || bitacora.Detalles || `Acción realizada sobre el registro ${registroId || 'N/A'}`;
 
         html += `
             <tr>
-                <td>
-                    <small>${fecha}</small>
-                </td>
+                <td><code>#${id}</code></td>
+
                 <td>
                     <div>${usuario}</div>
                     <small class="text-muted">${rol}</small>
                 </td>
+
                 <td>
-                    <span class="action-badge ${accionClass}">${bitacora.accion || bitacora.Accion}</span>
+                    <span class="action-badge ${accionClass}">${accion}</span>
                 </td>
+
                 <td>
-                    <small>${bitacora.tabla || bitacora.Tabla}</small>
+                    <small>${tabla}</small><br>
+                    <code>${registroId ? '#' + registroId : 'N/A'}</code>
                 </td>
+
                 <td>
-                    <code>#${bitacora.registroId || bitacora.RegistroId}</code>
+                    <small>${fecha}</small>
+                </td>
+
+                <td>
+                    <small>${descripcion}</small>
+                </td>
+
+                <td>
+                    <button type="button" class="btn details-btn" onclick="mostrarDetalles(${id})">
+                        Detalles
+                    </button>
                 </td>
             </tr>
         `;
@@ -301,33 +381,63 @@ function renderTabla(bitacorasLista) {
     contentDiv.innerHTML = html;
 }
 
-// Actualizar controles de paginación (cliente)
-function actualizarPaginacion() {
-    const totalPaginas = Math.ceil(bitacorasActuales.length / registrosPorPagina);
-    const paginationContainer = document.getElementById('paginationContainer');
+// Formatear fecha local
+function formatearFechaLocal(fecha) {
+    if (!fecha) return 'Sin fecha';
 
-    if (totalPaginas > 1) {
+    return new Date(fecha).toLocaleString('es-GT', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+}
+
+// Paginación cliente
+function actualizarPaginacion() {
+    const totalPaginas = Math.ceil(bitacorasFiltradas.length / registrosPorPagina);
+    const paginationContainer = document.getElementById('paginationContainer');
+    const paginaActualTexto = document.getElementById('paginaActualTexto');
+
+    if (bitacorasFiltradas.length > 0) {
         paginationContainer.classList.remove('d-none');
-        document.getElementById('paginationInfo').textContent = 
-            `Página ${paginaActual} de ${totalPaginas} (${bitacorasActuales.length} registros)`;
+
+        const inicio = ((paginaActual - 1) * registrosPorPagina) + 1;
+        const fin = Math.min(paginaActual * registrosPorPagina, bitacorasFiltradas.length);
+
+        document.getElementById('paginationInfo').textContent =
+            `Mostrando ${inicio}-${fin} de ${bitacorasFiltradas.length} registros`;
+
+        if (paginaActualTexto) {
+            paginaActualTexto.textContent = `Página ${paginaActual} de ${totalPaginas}`;
+        }
     } else {
         paginationContainer.classList.add('d-none');
     }
 }
 
-// Actualizar paginación cuando backend controla paginado
+// Paginación backend
 function actualizarPaginacionBackend() {
     const paginationContainer = document.getElementById('paginationContainer');
-    if (totalPaginasBackend > 1) {
+    const paginaActualTexto = document.getElementById('paginaActualTexto');
+
+    if (bitacorasFiltradas.length > 0) {
         paginationContainer.classList.remove('d-none');
-        document.getElementById('paginationInfo').textContent = 
-            `Página ${paginaActual} de ${totalPaginasBackend}`;
+
+        document.getElementById('paginationInfo').textContent =
+            `Mostrando ${bitacorasFiltradas.length} registros de la página actual`;
+
+        if (paginaActualTexto) {
+            paginaActualTexto.textContent = `Página ${paginaActual} de ${totalPaginasBackend}`;
+        }
     } else {
         paginationContainer.classList.add('d-none');
     }
 }
 
-// Navegar a página anterior
+// Página anterior
 function paginaAnterior() {
     if (usingBackendPagination) {
         if (paginaActual > 1) {
@@ -344,7 +454,7 @@ function paginaAnterior() {
     }
 }
 
-// Navegar a página siguiente
+// Página siguiente
 function paginaSiguiente() {
     if (usingBackendPagination) {
         if (paginaActual < totalPaginasBackend) {
@@ -354,7 +464,8 @@ function paginaSiguiente() {
         return;
     }
 
-    const totalPaginas = Math.ceil(bitacorasActuales.length / registrosPorPagina);
+    const totalPaginas = Math.ceil(bitacorasFiltradas.length / registrosPorPagina);
+
     if (paginaActual < totalPaginas) {
         paginaActual++;
         mostrarTabla();
@@ -362,21 +473,22 @@ function paginaSiguiente() {
     }
 }
 
-// Obtener clase CSS para la acción
+// Clase CSS según acción
 function obtenerClaseAccion(accion) {
-    const mapa = {
-        'Registrar': 'create',
-        'Actualizar': 'update',
-        'Eliminar': 'delete',
-        'Consulta': 'consulta',
-        'Consultar Ranking Prioridad': 'consulta'
-    };
-    return mapa[accion] || 'consulta';
+    const texto = (accion || '').toString().toLowerCase();
+
+    if (texto.includes('crear') || texto.includes('registrar')) return 'create';
+    if (texto.includes('actualizar')) return 'update';
+    if (texto.includes('eliminar')) return 'delete';
+    if (texto.includes('consulta') || texto.includes('consultar')) return 'consulta';
+
+    return 'consulta';
 }
 
 // Mostrar detalles en modal
-async function mostrarDetalles(bitacoraId) {
+function mostrarDetalles(bitacoraId) {
     const bitacora = bitacorasActuales.find(b => b.id === bitacoraId || b.Id === bitacoraId);
+
     if (!bitacora) return;
 
     const modalBody = document.getElementById('modalBody');
@@ -387,25 +499,34 @@ async function mostrarDetalles(bitacoraId) {
             <div class="detail-label">ID:</div>
             <div class="detail-value">${bitacora.id || bitacora.Id}</div>
         </div>
+
         <div class="detail-row">
             <div class="detail-label">Fecha/Hora:</div>
-            <div class="detail-value">${new Date(bitacora.fechaAccion || bitacora.FechaAccion).toLocaleString('es-ES')}</div>
+            <div class="detail-value">${formatearFechaLocal(bitacora.fechaAccion || bitacora.FechaAccion)}</div>
         </div>
+
         <div class="detail-row">
             <div class="detail-label">Usuario:</div>
             <div class="detail-value">${bitacora.usuario?.nombre || bitacora.NombreUsuario || 'Sistema'} (${bitacora.usuario?.rol || bitacora.RolUsuario || ''})</div>
         </div>
+
         <div class="detail-row">
             <div class="detail-label">Acción:</div>
-            <div class="detail-value"><span class="action-badge ${obtenerClaseAccion(bitacora.accion || bitacora.Accion)}">${bitacora.accion || bitacora.Accion}</span></div>
+            <div class="detail-value">
+                <span class="action-badge ${obtenerClaseAccion(bitacora.accion || bitacora.Accion)}">
+                    ${bitacora.accion || bitacora.Accion}
+                </span>
+            </div>
         </div>
+
         <div class="detail-row">
-            <div class="detail-label">Tabla:</div>
-            <div class="detail-value">${bitacora.tabla || bitacora.Tabla}</div>
+            <div class="detail-label">Entidad:</div>
+            <div class="detail-value">${bitacora.tabla || bitacora.Tabla || 'Sin entidad'}</div>
         </div>
+
         <div class="detail-row">
             <div class="detail-label">ID Registro:</div>
-            <div class="detail-value">#${bitacora.registroId || bitacora.RegistroId}</div>
+            <div class="detail-value">#${bitacora.registroId || bitacora.RegistroId || 'N/A'}</div>
         </div>
     `;
 
@@ -418,64 +539,52 @@ async function mostrarDetalles(bitacoraId) {
         `;
     }
 
-    if (bitacora.detalles) {
+    if (bitacora.detalles || bitacora.Detalles) {
         detallesHTML += `
             <div class="detail-row">
                 <div class="detail-label">Detalles:</div>
-                <div class="detail-value">${bitacora.detalles}</div>
+                <div class="detail-value">${bitacora.detalles || bitacora.Detalles}</div>
             </div>
         `;
     }
 
     if (bitacora.datosAnteriores || bitacora.DatosAnteriores) {
-        try {
-            const prev = JSON.stringify(JSON.parse(bitacora.datosAnteriores || bitacora.DatosAnteriores), null, 2);
-            detallesHTML += `
-                <div class="detail-row">
-                    <div class="detail-label">Datos Anteriores:</div>
-                    <div class="detail-value">${prev}</div>
-                </div>
-            `;
-        } catch (e) {
-            detallesHTML += `
-                <div class="detail-row">
-                    <div class="detail-label">Datos Anteriores:</div>
-                    <div class="detail-value">${bitacora.datosAnteriores || bitacora.DatosAnteriores}</div>
-                </div>
-            `;
-        }
+        detallesHTML += crearFilaJson('Datos Anteriores:', bitacora.datosAnteriores || bitacora.DatosAnteriores);
     }
 
     if (bitacora.datosNuevos || bitacora.DatosNuevos) {
-        try {
-            const nuevo = JSON.stringify(JSON.parse(bitacora.datosNuevos || bitacora.DatosNuevos), null, 2);
-            detallesHTML += `
-                <div class="detail-row">
-                    <div class="detail-label">Datos Nuevos:</div>
-                    <div class="detail-value">${nuevo}</div>
-                </div>
-            `;
-        } catch (e) {
-            detallesHTML += `
-                <div class="detail-row">
-                    <div class="detail-label">Datos Nuevos:</div>
-                    <div class="detail-value">${bitacora.datosNuevos || bitacora.DatosNuevos}</div>
-                </div>
-            `;
-        }
+        detallesHTML += crearFilaJson('Datos Nuevos:', bitacora.datosNuevos || bitacora.DatosNuevos);
     }
 
-    if (bitacora.detallesCambios) {
+    if (bitacora.detallesCambios || bitacora.DetallesCambios) {
         detallesHTML += `
             <div class="detail-row">
                 <div class="detail-label">Cambios Específicos:</div>
-                <div class="detail-value">${bitacora.detallesCambios}</div>
+                <div class="detail-value">${bitacora.detallesCambios || bitacora.DetallesCambios}</div>
             </div>
         `;
     }
 
     modalBody.innerHTML = detallesHTML;
     modal.show();
+}
+
+// Crear fila con JSON formateado
+function crearFilaJson(label, valor) {
+    let contenido = valor;
+
+    try {
+        contenido = JSON.stringify(JSON.parse(valor), null, 2);
+    } catch (e) {
+        contenido = valor;
+    }
+
+    return `
+        <div class="detail-row">
+            <div class="detail-label">${label}</div>
+            <div class="detail-value">${contenido}</div>
+        </div>
+    `;
 }
 
 // Cargar resumen estadístico
@@ -521,7 +630,7 @@ async function cargarResumen() {
                     <table class="table table-striped">
                         <thead>
                             <tr>
-                                <th>Tabla</th>
+                                <th>Entidad</th>
                                 <th>Acción</th>
                                 <th>Total Acciones</th>
                                 <th>Usuarios Involucrados</th>
@@ -534,8 +643,8 @@ async function cargarResumen() {
             `;
 
             resumen.forEach(item => {
-                const primeraAccion = new Date(item.primeraAccion).toLocaleString('es-ES');
-                const ultimaAccion = new Date(item.ultimaAccion).toLocaleString('es-ES');
+                const primeraAccion = formatearFechaLocal(item.primeraAccion);
+                const ultimaAccion = formatearFechaLocal(item.ultimaAccion);
 
                 html += `
                     <tr>
@@ -560,6 +669,7 @@ async function cargarResumen() {
         resumenContainer.innerHTML = html;
     } catch (error) {
         console.error('Error al cargar resumen:', error);
+
         resumenContainer.innerHTML = `
             <div class="alert alert-danger" role="alert">
                 <strong>Error:</strong> No se pudo cargar el resumen. ${error.message}
@@ -575,28 +685,30 @@ function limpiarFiltros() {
     document.getElementById('filterAccion').value = '';
     document.getElementById('filterFechaInicio').value = '';
     document.getElementById('filterFechaFin').value = '';
+    document.getElementById('filterBusqueda').value = '';
     document.getElementById('customDateRange').style.display = 'none';
-    cargarBitacoras();
+
+    paginaActual = 1;
+    cargarBitacoras(1);
 }
 
-// Aplicar filtros (invocado por botón)
+// Aplicar filtros
 function aplicarFiltros() {
-    // Reiniciar paginación
     paginaActual = 1;
     cargarBitacoras(1);
 }
 
 // Exportar bitácora a CSV
 function exportarACSV() {
-    if (bitacorasActuales.length === 0) {
+    if (bitacorasFiltradas.length === 0) {
         alert('No hay registros para exportar');
         return;
     }
 
-    let csv = 'ID,Fecha,Usuario,Rol,Acción,Tabla,Registro ID,Detalles,IP\n';
+    let csv = 'ID,Fecha,Usuario,Rol,Acción,Entidad,Registro ID,Detalles,IP\n';
 
-    bitacorasActuales.forEach(b => {
-        const fecha = new Date(b.fechaAccion || b.FechaAccion).toLocaleString('es-ES');
+    bitacorasFiltradas.forEach(b => {
+        const fecha = formatearFechaLocal(b.fechaAccion || b.FechaAccion);
         const usuario = b.usuario?.nombre || b.NombreUsuario || 'Sistema';
         const rol = b.usuario?.rol || b.RolUsuario || '';
         const detalles = (b.detalles || b.Detalles || '').toString().replace(/"/g, '""');
