@@ -127,6 +127,18 @@
                      role="tabpanel"
                      aria-labelledby="bitacora-tab">
 
+                <!-- Botón de exportación a Excel -->
+                <div class="export-button-container mb-4">
+                    <button type="button" id="exportarExcelBtn" class="btn btn-export">
+                        <span class="export-icon">📥</span>
+                        <span class="export-text">Exportar a Excel</span>
+                        <span class="export-spinner d-none">
+                            <span class="spinner-border spinner-border-sm ms-2" role="status" aria-hidden="true"></span>
+                        </span>
+                    </button>
+                    <div id="exportMessage" class="export-message d-none"></div>
+                </div>
+
                 <!-- Tarjetas de estadísticas -->
                 <div class="stats-cards" id="statsContainer" aria-label="Tarjetas de estadísticas de acciones">
 

@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
     conectarPageSize();
     conectarCerrarSesion();
     conectarVolverMenu();
+    conectarExportarExcel();
     cargarBitacoras();
 
     const resumenTab = document.getElementById('resumen-tab');
@@ -728,4 +729,210 @@ function exportarACSV() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+
+// ============================================
+// FUNCIONALIDAD DE EXPORTACIÓN A EXCEL
+// ============================================
+
+// Conectar evento del botón de exportación a Excel
+function conectarExportarExcel() {
+    const exportBtn = document.getElementById('exportarExcelBtn');
+    
+    if (!exportBtn) return;
+
+    exportBtn.addEventListener('click', function() {
+        exportarBitacoraAExcel();
+    });
+}
+
+// Función principal de exportación a Excel
+async function exportarBitacoraAExcel() {
+    const exportBtn = document.getElementById('exportarExcelBtn');
+    const exportMessage = document.getElementById('exportMessage');
+    
+    // Validar que hay registros
+    if (bitacorasFiltradas.length === 0) {
+        mostrarMensajeExportacion('No hay registros para exportar', 'error');
+        return;
+    }
+
+    // Deshabilitar botón y mostrar spinner
+    exportBtn.disabled = true;
+    const spinner = exportBtn.querySelector('.export-spinner');
+    const text = exportBtn.querySelector('.export-text');
+    
+    spinner.classList.remove('d-none');
+    text.textContent = 'Generando...';
+
+    try {
+        // Recopilar filtros actuales
+        const filtros = recopilarFiltrosActuales();
+
+        // Enviar solicitud al backend
+        const response = await fetch('/api/bitacora/exportar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify(filtros)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `Error ${response.status}: No se pudo generar el archivo`);
+        }
+
+        // Obtener el archivo
+        const blob = await response.blob();
+        
+        // Crear nombre del archivo
+        const nombreArchivo = generarNombreArchivoExcel(filtros);
+        
+        // Descargar el archivo
+        descargarArchivo(blob, nombreArchivo);
+
+        // Mostrar mensaje de éxito
+        const recordCount = bitacorasFiltradas.length;
+        mostrarMensajeExportacion(
+            `✓ Archivo descargado correctamente (${recordCount} registros)`,
+            'success'
+        );
+
+        // Limpiar después de 3 segundos
+        setTimeout(() => {
+            limpiarEstadoExportacion();
+        }, 3000);
+
+    } catch (error) {
+        console.error('Error en exportación:', error);
+        mostrarMensajeExportacion(
+            `⚠️ Error al exportar: ${error.message}`,
+            'error'
+        );
+        limpiarEstadoExportacion();
+    }
+}
+
+// Recopilar los filtros actuales
+function recopilarFiltrosActuales() {
+    const diasSelect = document.getElementById('filterDias');
+    const tablaSelect = document.getElementById('filterTabla');
+    const accionSelect = document.getElementById('filterAccion');
+    const fechaInicio = document.getElementById('filterFechaInicio');
+    const fechaFin = document.getElementById('filterFechaFin');
+
+    const dias = parseInt(diasSelect?.value || '30');
+    const tabla = tablaSelect?.value?.trim() || null;
+    const accion = accionSelect?.value?.trim() || null;
+    
+    let filtrosEnvio = {
+        dias: dias !== -1 ? dias : null,
+        tabla: tabla,
+        accion: accion,
+        exportarSoloResultadosVisibles: false
+    };
+
+    // Si es rango personalizado, agregar fechas
+    if (dias === -1 || diasSelect?.value === 'custom') {
+        const inicio = fechaInicio?.value;
+        const fin = fechaFin?.value;
+        
+        if (inicio && fin) {
+            filtrosEnvio.fechaInicio = inicio;
+            filtrosEnvio.fechaFin = fin;
+            filtrosEnvio.dias = null;
+        }
+    }
+
+    return filtrosEnvio;
+}
+
+// Generar nombre del archivo Excel
+function generarNombreArchivoExcel(filtros) {
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '').replace('T', '_');
+    const hasFilters = filtros.tabla || filtros.accion;
+
+    if (hasFilters && filtros.tabla) {
+        return `bitacora_filtrada_${filtros.tabla}_${timestamp}.xlsx`;
+    }
+
+    if (hasFilters) {
+        return `bitacora_filtrada_${timestamp}.xlsx`;
+    }
+
+    return `bitacora_auditoria_${timestamp}.xlsx`;
+}
+
+// Descargar archivo
+function descargarArchivo(blob, nombreArchivo) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = nombreArchivo;
+    link.style.display = 'none';
+
+    document.body.appendChild(link);
+    link.click();
+    
+    setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }, 100);
+}
+
+// Mostrar mensaje de exportación
+function mostrarMensajeExportacion(mensaje, tipo) {
+    const messageDiv = document.getElementById('exportMessage');
+    
+    if (!messageDiv) return;
+
+    messageDiv.textContent = mensaje;
+    messageDiv.className = `export-message ${tipo}`;
+    messageDiv.classList.remove('d-none');
+}
+
+// Limpiar estado del botón de exportación
+function limpiarEstadoExportacion() {
+    const exportBtn = document.getElementById('exportarExcelBtn');
+    const spinner = exportBtn?.querySelector('.export-spinner');
+    const text = exportBtn?.querySelector('.export-text');
+    const messageDiv = document.getElementById('exportMessage');
+
+    if (exportBtn) {
+        exportBtn.disabled = false;
+    }
+    
+    if (spinner) {
+        spinner.classList.add('d-none');
+    }
+    
+    if (text) {
+        text.textContent = 'Exportar a Excel';
+    }
+
+    // Ocultar mensaje después de animación
+    if (messageDiv && !messageDiv.classList.contains('d-none')) {
+        setTimeout(() => {
+            messageDiv.classList.add('d-none');
+        }, 3000);
+    }
+}
+
+// Actualizar estado del botón según registros disponibles
+function actualizarEstadoBotonExportacion() {
+    const exportBtn = document.getElementById('exportarExcelBtn');
+    
+    if (!exportBtn) return;
+
+    const tieneRegistros = bitacorasFiltradas.length > 0;
+    
+    exportBtn.disabled = !tieneRegistros;
+    
+    if (!tieneRegistros) {
+        exportBtn.title = 'No hay registros para exportar';
+    } else {
+        exportBtn.title = `Exportar ${bitacorasFiltradas.length} registros a Excel`;
+    }
 }
