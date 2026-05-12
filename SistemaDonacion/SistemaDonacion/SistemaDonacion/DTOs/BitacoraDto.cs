@@ -1,4 +1,7 @@
-﻿namespace SistemaDonacion.DTOs
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using SistemaDonacion.Models;
+
+namespace SistemaDonacion.DTOs
 {
     // Filtros que manda el frontend (fechas, tabla, acción, página)
     public class BitacoraFiltroDto
@@ -17,6 +20,10 @@
     {
         public int Id { get; set; }
         public int UsuarioId { get; set; }
+        
+        // Relación con usuario
+        [ForeignKey("UsuarioId")]
+        public virtual ApplicationUser? Usuario { get; set; }
         public string NombreUsuario { get; set; } = string.Empty;
         public string RolUsuario { get; set; } = string.Empty;
         public string Accion { get; set; } = string.Empty;

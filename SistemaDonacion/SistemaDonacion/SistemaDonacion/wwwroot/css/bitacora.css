@@ -447,6 +447,114 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
 }
 
+/* Estilos para exportación a Excel */
+.export-button-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn-export {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: var(--color-success);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 44px;
+    max-width: fit-content;
+}
+
+.btn-export:hover:not(:disabled) {
+    background-color: #218838;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.btn-export:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-export:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-export:disabled::after {
+    content: " No hay registros para exportar";
+}
+
+.export-icon {
+    font-size: 1.1rem;
+}
+
+.export-spinner {
+    display: inline-block;
+}
+
+.export-text {
+    display: inline;
+}
+
+/* Mensaje de estado de exportación */
+.export-message {
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideIn 0.3s ease;
+}
+
+.export-message.success {
+    background-color: var(--color-success-light);
+    color: var(--color-success-text);
+    border-left: 4px solid var(--color-success);
+}
+
+.export-message.error {
+    background-color: var(--color-error-light);
+    color: var(--color-error-text);
+    border-left: 4px solid var(--color-error);
+}
+
+.export-message.info {
+    background-color: var(--color-info-light);
+    color: var(--color-info-text);
+    border-left: 4px solid var(--color-info);
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .bitacora-container {
@@ -485,6 +593,11 @@ body {
 
     .detail-row {
         grid-template-columns: 1fr;
+    }
+
+    .btn-export {
+        width: 100%;
+        min-height: 48px;
     }
 }
 
