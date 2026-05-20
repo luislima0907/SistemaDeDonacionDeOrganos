@@ -1,0 +1,5 @@
+﻿1	admin	$PBKDF2$10000$8T8EIKKp3WxYQJp2KeJKvA==$vIZ6M3QaY7T/oPu+QsJ0TuXYzOvs7G8YkR+2qZvFhMI=	1	Administrador	NULL
+2	medico1	$PBKDF2$10000$PBPYvv07oE+ZTjggclVYmA==$nzOtI1jl67AjxOGYaRjweYFxLX6slRPP1zBRc60kw8A=	1	Medico	1
+3	medico2	$PBKDF2$10000$PBPYvv07oE+ZTjggclVYmA==$nzOtI1jl67AjxOGYaRjweYFxLX6slRPP1zBRc60kw8A=	1	Medico	2
+4	admin2	$PBKDF2$10000$PBPYvv07oE+ZTjggclVYmA==$nzOtI1jl67AjxOGYaRjweYFxLX6slRPP1zBRc60kw8A=	1	Administrador	NULL
+5	admin3	$PBKDF2$10000$F9NkS8xYQspyH9hrwkkqWg==$FjCr+dCd4ToYd/z6p+AK41RMkcpLvxS28FSQuZ3Opg8=	1	Administrador	NULL
