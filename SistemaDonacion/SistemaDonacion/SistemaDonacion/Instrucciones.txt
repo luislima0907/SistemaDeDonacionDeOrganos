@@ -1,0 +1,545 @@
+﻿RF-24 Implementación de funcionalidad de exportación de datos a Excel en bitácora de auditoría
+
+Tipo de Requerimiento
+
+Funcional
+
+Descripción General
+
+Implementar una funcionalidad de exportación de datos a Excel que permita a los administradores descargar los registros de auditoría mostrados en la tabla de bitácora, respetando los filtros aplicados y la paginación actual. Esto incluye crear un botón de exportación visible y accesible, generar archivos Excel bien formateados con estilos profesionales, mantener la integridad de datos y proporcionar feedback visual al usuario durante el proceso de exportación.
+
+Historia de Usuario
+
+Como administrador del sistema,
+quiero exportar los registros de auditoría mostrados en la bitácora a un archivo Excel,
+para analizar, compartir y auditar los datos fuera del sistema de manera conveniente y profesional.
+
+Responsable
+
+Encargado de Frontend - Exportación de Datos / Encargado de Backend - API de Exportación
+
+Alcance
+
+Incorporar exportación a Excel desde el módulo de bitácora de auditoría.
+
+Respetar filtros, resultados visibles y criterios de exportación definidos.
+
+Proporcionar feedback visual claro durante el proceso.
+
+Garantizar integridad, trazabilidad y seguridad en la exportación.
+
+Separar la implementación en componentes de frontend y backend mediante subissues específicas.
+
+Backend – API de exportación de bitácora a Excel
+
+Criterios de Aceptación (Backend)
+
+Dado que el cliente solicita exportación de bitácora, entonces el sistema debe recibir filtros, criterios de búsqueda y contexto de paginación mediante POST /api/bitacora/exportar.
+
+Dado que no existan filtros aplicados, entonces el sistema debe exportar todos los registros disponibles de la bitácora.
+
+Dado que existan filtros activos (usuario, tipo de acción, rango de fechas, tabla o entidad), entonces el sistema debe exportar únicamente los registros coincidentes.
+
+Dado que el usuario esté en una página específica, entonces el sistema debe permitir exportar la página actual o, preferiblemente, todos los resultados filtrados según la opción seleccionada.
+
+Dado que la exportación sea exitosa, entonces el sistema debe generar y retornar un archivo Excel descargable con nombre significativo y timestamp.
+
+Dado que el archivo sea generado, entonces debe incluir encabezados en español, estilos básicos, formato legible y metadatos de exportación como fecha y usuario.
+
+Dado que el archivo incluya acciones auditables, entonces los valores deben mostrarse en formato legible (Crear, Actualizar, Eliminar, Consulta) y no con códigos internos.
+
+Dado que existan datos complejos o JSON estructurado, entonces deben exportarse en formato legible e indentado cuando aplique.
+
+Dado que existan muchos registros (>1000), entonces la exportación debe completarse sin fallos relevantes de rendimiento.
+
+Dado que ocurra un error durante la generación, entonces el sistema debe responder de forma controlada para permitir mostrar mensajes claros y reintento desde la interfaz.
+
+Dado que se complete una exportación, entonces la acción debe registrarse en bitácora.
+
+Reglas de Negocio (Backend)
+
+El formato de archivo debe ser Excel (.xlsx).
+
+La exportación debe respetar exactamente los filtros aplicados.
+
+Los datos exportados deben ser idénticos a los mostrados en pantalla según el criterio de exportación.
+
+El nombre del archivo debe incluir timestamp para evitar duplicados.
+
+El archivo solo debe ser descargable por usuarios autenticados.
+
+La exportación debe mantener integridad de datos y trazabilidad.
+
+El endpoint debe validar permisos antes de generar el archivo.
+
+El backend debe usar una librería compatible para generación de Excel (ClosedXML, EPPlus o equivalente).
+
+El archivo debe ser compatible con Excel 2016+, Google Sheets y LibreOffice Calc.
+
+El tamaño del archivo debe mantenerse optimizado (máximo 50MB para 10000 registros).
+
+Endpoint API
+
+POST /api/bitacora/exportar
+
+Recibe:
+
+Parámetros de filtro (usuario, tipo acción, fecha inicio, fecha fin, tabla)
+
+Página actual, opcional
+
+Criterio de exportación (página actual o todos los resultados filtrados)
+
+Procesa:
+
+Consulta de datos reales según filtros y permisos
+
+Generación de archivo Excel con estilos y metadatos
+
+Registro de la acción de exportación en bitácora
+
+Retorna:
+
+Archivo descargable o stream del .xlsx
+
+Error controlado si la exportación falla
+
+Componentes Técnicos
+
+Endpoint de exportación para bitácora
+
+Validación de autenticación y permisos
+
+Recolección y validación de filtros
+
+Consulta de registros a exportar
+
+Generación de Excel con estilos
+
+Inclusión de metadatos de exportación
+
+Optimización para grandes volúmenes
+
+Registro de auditoría de la exportación
+
+Manejo de errores controlados
+
+Frontend – Funcionalidad de exportación mejorada
+
+Criterios de Aceptación (Frontend)
+
+Dado que el usuario visualiza la página de bitácora, entonces debe ver:
+
+Un botón "📥 Exportar a Excel" ubicado en la sección superior de la tabla
+
+El botón debe estar alineado a la derecha del contenedor de herramientas
+
+Botón con estilo secundario o especial (color verde #28a745 o primario #667eea)
+
+El botón debe tener padding 0.75rem 1.5rem
+
+Font-size 0.95rem, peso 600
+
+Border-radius 8px
+
+Sombra suave: 0 2px 4px rgba(0, 0, 0, 0.1)
+
+Efecto hover con cambio de color oscurecido y elevación
+
+Transición suave de 0.3s ease
+
+Cursor tipo pointer
+
+Dado que el usuario no ha aplicado filtros ni paginación, cuando hace clic en "Exportar a Excel", entonces:
+
+Se exportan todos los registros de la tabla completa
+
+El archivo incluye todas las columnas visibles: ID, Usuario, Tipo Acción, Tabla o Entidad, Fecha y Hora, Descripción
+
+El nombre del archivo será: bitacora_auditoria_YYYYMMDD_HHMMSS.xlsx
+
+Se muestra un spinner de carga mientras se genera el archivo
+
+El botón se deshabilita temporalmente durante la exportación
+
+El botón muestra texto "Generando..." durante el proceso
+
+Dado que el usuario ha aplicado filtros específicos (usuario, tipo acción, rango fechas, etc.), cuando hace clic en "Exportar a Excel", entonces:
+
+Se exportan solo los registros que coinciden con los filtros activos
+
+El archivo respeta exactamente los criterios de filtro (búsqueda de fecha, usuario, tipo acción, tabla)
+
+Los datos exportados son los mismos que se muestran en la tabla filtrada
+
+El nombre del archivo incluye referencia a los filtros: bitacora_filtrada_YYYYMMDD_HHMMSS.xlsx
+
+Se muestra mensaje informativo: "Exportando X registros coincidentes..."
+
+Dado que el usuario está navegando en una página específica de la paginación, cuando hace clic en "Exportar a Excel", entonces:
+
+Se exportan los registros de la página actual mostrada
+
+O preferiblemente se exportan todos los resultados filtrados (todas las páginas)
+
+Se recomienda la opción de exportar todo con confirmación
+
+Mensaje: "Se exportarán X registros en total. ¿Deseas continuar?"
+
+Dado que el usuario hace clic en "Exportar a Excel" y la solicitud es exitosa, entonces debe visualizar:
+
+El spinner de carga desaparece
+
+El botón vuelve a su estado normal y se habilita nuevamente
+
+Se muestra mensaje de éxito en verde (#d4edda): "✓ Archivo descargado correctamente"
+
+El navegador descarga automáticamente el archivo Excel
+
+El archivo se abre o guarda según la configuración del navegador del usuario
+
+El mensaje desaparece automáticamente después de 3 segundos
+
+Dado que ocurre un error durante la exportación, entonces debe visualizar:
+
+El spinner de carga desaparece
+
+El botón vuelve a su estado normal y se habilita nuevamente
+
+Se muestra mensaje de error en rojo (#f8d7da): "⚠️ Error al exportar. Intente nuevamente"
+
+Mensaje de error con descripción técnica, si aplica
+
+Botón para reintentar la exportación
+
+Dado que el archivo Excel se genera, entonces debe contener:
+
+Encabezados con fondo azul primario (#667eea) y texto blanco
+
+Encabezados con peso bold (700)
+
+Encabezados con altura de fila aumentada (25px)
+
+Columnas autoajustadas según contenido (auto-fit)
+
+Ancho mínimo de columnas: 10, máximo: 50
+
+Datos en color gris oscuro (#333) sobre fondo blanco
+
+Filas alternas con fondo gris muy claro (#f5f5f5) para mejor legibilidad
+
+Bordes en todas las celdas: 1px solid #ddd
+
+Padding en celdas: 8px
+
+Alineación: texto izquierda en general, números y fechas derecha
+
+Formato de fechas: DD/MM/YYYY HH:MM:SS
+
+Congelación de encabezados (freeze panes) en la primera fila
+
+Dado que el archivo Excel incluye datos de acciones, entonces debe mostrar:
+
+Badges de tipo acción formateados como texto
+
+"Crear" en lugar de código interno
+
+"Actualizar" en lugar de código interno
+
+"Eliminar" en lugar de código interno
+
+"Consulta" en lugar de código interno
+
+Datos legibles y sin códigos internos del sistema
+
+JSON complejo formateado con indentación, si incluye cambios detallados
+
+Dado que el archivo Excel contiene muchos registros (>1000), entonces:
+
+Se genera correctamente sin problemas de rendimiento
+
+Se muestra barra de progreso indicando: "Procesando 500 de 1500 registros..."
+
+La exportación se completa sin congelarse
+
+Dado que el usuario visualiza el archivo Excel descargado, entonces debe ver:
+
+Nombre significativo: bitacora_auditoria_20260503_143022.xlsx
+
+O con referencia de filtros: bitacora_filtrada_usuario_admin_20260503.xlsx
+
+Estructura clara con encabezados y datos formateados
+
+Estilos profesionales aplicados
+
+Compatible con Excel 2016+, Google Sheets y LibreOffice Calc
+
+Tamaño de archivo optimizado (máximo 50MB para 10000 registros)
+
+Dado que el usuario accede desde dispositivo móvil, entonces:
+
+El botón "Exportar a Excel" sigue siendo visible y funcional
+
+El botón se adapta al ancho de pantalla (responsive)
+
+El proceso de descarga funciona igual en navegadores móviles
+
+El botón tiene altura mínima touch-friendly de 44px
+
+Dado que no hay registros que exportar (tabla vacía o sin resultados), entonces debe visualizar:
+
+El botón "Exportar a Excel" está deshabilitado (opacity 0.5, cursor not-allowed)
+
+Tooltip: "No hay registros para exportar"
+
+Al pasar el mouse muestra: "Carga registros y aplica filtros para exportar"
+
+Dado que el usuario no tiene permisos para exportar (caso hipotético), entonces:
+
+El botón está completamente oculto o deshabilitado
+
+Se muestra mensaje: "No tienes permisos para exportar datos"
+
+Reglas de Negocio (Frontend)
+
+El botón de exportación debe estar siempre visible en la tabla de bitácora.
+
+La exportación debe respetar exactamente los filtros aplicados.
+
+La exportación debe incluir todos los registros filtrados, no solo la página actual, como opción recomendada.
+
+El formato de archivo debe ser Excel (.xlsx).
+
+Los encabezados deben estar en idioma español.
+
+El nombre del archivo debe incluir timestamp para evitar duplicados.
+
+La exportación debe ser rápida (máximo 5 segundos para 1000 registros).
+
+Se debe mostrar feedback visual durante toda la exportación.
+
+Los datos exportados deben ser idénticos a los mostrados en pantalla.
+
+El botón debe deshabilitarse durante el proceso de exportación.
+
+Se debe registrar la acción de exportación en bitácora.
+
+El archivo debe ser descargable solo por usuarios autenticados.
+
+El cliente debe tener librería compatible: SheetJS, ExcelJS o similar.
+
+El código JavaScript debe validar antes de enviar al servidor.
+
+El backend debe generar el archivo Excel con datos reales.
+
+El archivo debe incluir metadatos: fecha de exportación y usuario que exportó.
+
+Arquitectura de Archivos a Afectar o Crear
+
+bitacora.html
+
+Nuevo botón de exportación en HTML
+
+Ubicado cerca de la sección de herramientas (búsqueda, filtros)
+
+ID único para referenciarlo desde JavaScript: id="btnExportarExcel"
+
+Atributo data-total-records para contar registros
+
+Atributo aria-label descriptivo
+
+bitacora.css
+
+Estilos para el botón de exportación
+
+Efecto hover y estados (normal, hover, disabled, loading)
+
+Clase .btn-export con estilos específicos
+
+Clase .btn-loading para mostrar spinner
+
+Animación de spinner: rotación infinita 1s linear
+
+Transición suave de colores 0.3s ease
+
+bitacora.js
+
+Función exportarAExcel() que recoge datos de tabla
+
+Recolección de filtros activos
+
+Recolección de registros mostrados
+
+Validación de permisos
+
+Llamada a API de exportación (POST /api/bitacora/exportar)
+
+Gestión de estado del botón (loading, disabled)
+
+Formateo de datos antes de enviar
+
+Descarga de archivo recibido
+
+Manejo de errores
+
+Mensaje de éxito o error
+
+Evento click en botón
+
+Debouncing para evitar múltiples clics
+
+Mejoras Visuales Específicas
+
+Paleta de Colores para Botón
+
+Botón primario: #667eea (azul) o #28a745 (verde)
+
+Botón hover: #5568d3 (azul oscuro) o #1e7e34 (verde oscuro)
+
+Botón disabled: #cccccc (gris claro)
+
+Botón loading: #667eea (con spinner animado)
+
+Tipografía del Botón
+
+Familia: Arial, Helvetica, sans-serif
+
+Tamaño: 0.95rem
+
+Peso: 600 (semibold)
+
+Color texto: white
+
+Espaciado del Botón
+
+Padding: 0.75rem 1.5rem
+
+Border-radius: 8px
+
+Font-size: 0.95rem
+
+Altura mínima: 40px (desktop), 44px (móvil)
+
+Sombra del Botón
+
+Normal: 0 2px 4px rgba(0, 0, 0, 0.1)
+
+Hover: 0 4px 8px rgba(0, 0, 0, 0.15)
+
+Focus: 0 0 0 3px rgba(102, 126, 234, 0.2)
+
+Animaciones
+
+Transición: 0.3s ease en color y sombra
+
+Spinner: 1s linear infinite (rotación 360°)
+
+Fade mensajes: 0.3s ease-in-out
+
+Posicionamiento del Botón
+
+Ubicación: sección superior derecha de herramientas de tabla
+
+Alineación: flex row, justify-content: flex-end
+
+Gap con otros elementos: 10px mínimo
+
+Z-index: normal
+
+Estilos del Excel Generado
+
+Encabezados: fondo #667eea, texto blanco, peso bold, altura 25px
+
+Filas pares: fondo blanco
+
+Filas impares: fondo #f5f5f5
+
+Bordes: 1px solid #ddd en todas las celdas
+
+Padding celdas: 8px
+
+Ancho columnas: autoajuste, mínimo 10, máximo 50
+
+Alineación: texto izquierda, números y fechas derecha
+
+Congelación: primera fila (freeze panes)
+
+Margen superior: 1 fila vacía opcional
+
+Disposición Responsive
+
+Desktop (>768px): botón en línea con otros controles
+
+Tablet (480-768px): botón en línea, puede pasar a nueva línea si es necesario
+
+Mobile (<480px): botón en nueva línea, ancho 100% o flex-grow
+
+Componentes UI Adicionales
+
+Spinner animado durante exportación (CSS animation)
+
+Tooltip al pasar el mouse: "Exporta registros a Excel"
+
+Tooltip cuando está deshabilitado: "No hay registros para exportar"
+
+Mensaje de confirmación si hay muchos registros (>500)
+
+Barra de progreso animada opcional para grandes exportaciones
+
+Indicador visual de carga (loader)
+
+Validaciones del Cliente
+
+Validar que haya registros disponibles
+
+Validar que el usuario tenga permisos
+
+Validar que la tabla esté completamente cargada
+
+Validar respuesta del servidor
+
+Validar tipo MIME del archivo descargado
+
+Mejoras de Accesibilidad
+
+aria-label descriptivo: "Exportar registros de auditoría a Excel"
+
+aria-disabled cuando el botón está deshabilitado
+
+aria-busy durante el proceso de exportación
+
+Focus visible en navegación por teclado
+
+Atributo type="button" para claridad
+
+tabindex positivo si es necesario
+
+Indicador de estado en texto del botón
+
+Mensaje de confirmación accesible
+
+Instrucciones claras en tooltip
+
+Flujo de Usuario
+
+Usuario visualiza tabla de bitácora con registros cargados.
+
+Usuario aplica filtros, opcionalmente.
+
+Usuario hace clic en "Exportar a Excel".
+
+Se valida que haya registros y permisos.
+
+Se muestra spinner de carga.
+
+Se envía solicitud al backend con filtros.
+
+Backend genera archivo Excel.
+
+Se descarga archivo al cliente.
+
+Se muestra mensaje de éxito.
+
+Se registra la acción en bitácora.
+
+El archivo queda disponible en descargas del navegador.
